@@ -1,8 +1,5 @@
 package logging
 
-import "os"
-import "github.com/sirupsen/logrus"
-
 type Logger interface {
 	Debug(args ...interface{})
 	Debugf(format string, args ...interface{})
@@ -27,20 +24,21 @@ type Logger interface {
 	Warnln(args ...interface{})
 }
 
-//DefaultLogger is a logger warps logrus
-type DefaultLogger struct {
-	*logrus.Logger
-}
-
-//NewDefaultLogger makes a new DefaultLogger
-func NewDefaultLogger() Logger {
-	var log = logrus.New()
-	log.Out = os.Stdout
-	log.Level = logrus.InfoLevel
-	return WrapLogrus(log)
-}
-
-//WrapLogrus wraps a new DefaultLogger
-func WrapLogrus(p *logrus.Logger) Logger {
-	return &DefaultLogger{p}
-}
+//
+////DefaultLogger is a logger warps logrus
+//type DefaultLogger struct {
+//	*logrus.Logger
+//}
+//
+////NewDefaultLogger makes a new DefaultLogger
+//func NewDefaultLogger() Logger {
+//	var log = logrus.New()
+//	log.Out = os.Stdout
+//	log.Level = logrus.InfoLevel
+//	return WrapLogrus(log)
+//}
+//
+////WrapLogrus wraps a new DefaultLogger
+//func WrapLogrus(p *logrus.Logger) Logger {
+//	return &DefaultLogger{p}
+//}
