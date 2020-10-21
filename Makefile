@@ -9,13 +9,19 @@ VERSION ?= $(shell git describe --tags --always --dirty --match=v* 2> /dev/null 
 LDFLAGS = -w -extldflags -static
 
 .PHONY: all
-all: snmp-snapshot mockdevd
+all: snmp-snapshot mockdevd http-dump
 
 .PHONY: snmp-snapshot
 snmp-snapshot:
 	CGO_ENABLED=0 $(GO_BUILD) -ldflags "-X main.Version=$(VERSION) $(LDFLAGS)" \
  		-o $(BIN_SNMP_SNAPSHOT) \
  		cmd/snmpsnapshot/snmp_snapshot.go
+
+.PHONY: http-dump
+http-dump:
+	CGO_ENABLED=0 $(GO_BUILD) -ldflags "-X main.Version=$(VERSION) $(LDFLAGS)" \
+ 		-o $(BIN_SNMP_SNAPSHOT) \
+ 		cmd/httpdump/http_dump.go
 
 .PHONY: mockdevd
 mockdevd:

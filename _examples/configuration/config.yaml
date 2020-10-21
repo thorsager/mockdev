@@ -34,23 +34,69 @@ http:
             - "Content-Type: text/plain"
           body: Hello World, from mocdevd
 
-#ssh:
-#  - name: default
-#    bind-addr: ":2222"
+ssh:
+  - name: default
+    bind-addr: ":2222"
+    motd: |
+      Welcome to the mockdev ssh server
+      All you find is yours.
+    default-prompt: "> "
+    # If no host-keys are passed one is generated on server start
+    host-key-files:
+      - ssh_host_rsa_key
 #    host-keys:
-#    default-prompt: "> "
-#    default-response: "command not found."
-#    eol: "\r\n"
-#    users:
-#      - name: joe
-#        password: "dalton"
-#      - name: averal
-#        public-key: ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBMtdlldg8rw54JMzLCRwrQ4o2vTn6MhxVqdne87/Dpn+eBnF7cSRQGgHHcSG6l4JH1QmOxV0rqNc3msH37VIcy8= mit@Michaels-MacBook-Pro.local
-#    conversations:
-#      request: "ls -1"
-#      response: |
-#        .
-#        ..
-#        first_filename.txt
-#        another-file.txt
-#      prompt-prefix: "foo"
+#      - |
+#        -----BEGIN OPENSSH PRIVATE KEY-----
+#        b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAABlwAAAAdzc2gtcn
+#        NhAAAAAwEAAQAAAYEA9EyBhY6EZX20fU7QACapkOo8ZTNf2ykbHw6aDBYb1L8Uy8A6E1UD
+#        goVp888R/a23TXpjYYbZ3b/3ls6pgknrLpAdFPWaxSlByMEsyhHBexdKsoPVOi9cehtIJj
+#        mpJAzv0YTkrdBw1bAuVDj12+3jlDJmjCWI/hgSG94egMiK8mr68ip+tlZz8ID73GXMSoJi
+#        hE6BH7PbUupMF8X/8ijVOzJtiJYJWe1lTqUPHgCn9nb+ZEsxDeGoGoT9CiNS789ZnnTNR9
+#        R45jDywUCVRDNha4LrvWhT7HIhVbee3f5p+rdnTDd94f2vzD8+VDrb5s7vzLF9fxymFGG8
+#        Jc30cC8kvxj/nTDnRYiVdrzHIUSQvbcN/wvXLxQAxrgR5rlIdg7xNuR1SnLvvs+QKW4TGA
+#        GsQVjOxfefFnnFo5Aq8sz0eGF7z3uf3AdXgOleW0idR8ehCoWwXzVb+h0O8Qbd/f3eOf3C
+#        3ebpKfftnhBDKj0bMsL1Lql1/kCjevqN5EbDDU0HAAAFkCcbhicnG4YnAAAAB3NzaC1yc2
+#        EAAAGBAPRMgYWOhGV9tH1O0AAmqZDqPGUzX9spGx8OmgwWG9S/FMvAOhNVA4KFafPPEf2t
+#        t016Y2GG2d2/95bOqYJJ6y6QHRT1msUpQcjBLMoRwXsXSrKD1TovXHobSCY5qSQM79GE5K
+#        3QcNWwLlQ49dvt45QyZowliP4YEhveHoDIivJq+vIqfrZWc/CA+9xlzEqCYoROgR+z21Lq
+#        TBfF//Io1TsybYiWCVntZU6lDx4Ap/Z2/mRLMQ3hqBqE/QojUu/PWZ50zUfUeOYw8sFAlU
+#        QzYWuC671oU+xyIVW3nt3+afq3Z0w3feH9r8w/PlQ62+bO78yxfX8cphRhvCXN9HAvJL8Y
+#        /50w50WIlXa8xyFEkL23Df8L1y8UAMa4Eea5SHYO8TbkdUpy777PkCluExgBrEFYzsX3nx
+#        Z5xaOQKvLM9Hhhe897n9wHV4DpXltInUfHoQqFsF81W/odDvEG3f393jn9wt3m6Sn37Z4Q
+#        Qyo9GzLC9S6pdf5Ao3r6jeRGww1NBwAAAAMBAAEAAAGBAMGxOuwib/Rr80N6zk2gWcbtAI
+#        +YaQLBl6BLGnZEvTIzghB9y03ylILStou4/OGt7ux+AfecTHaVsn8eQaVsaAwV9QjeJiT2
+#        LhM2ngVkiIvIjs/02IV2cZLauJyeEO3lV+s9u3XYEu5J7qGWO9Bwz4R7ZXTueaxEd28i7/
+#        pZhljn2ylP6gE1kFz6VzaKe6wDroqKF7SEDHu0Cjq7IM/l8hIqTFAD7UwgfbcaBV9bU9CE
+#        zfPE7hK8fGTyVhHIqgQ6153En8LO1SkjdCBANFdAjw4et8JJW7iZIPbJLTV9YoKiOtgeQq
+#        x1KE79GaUe5vRIz47wQH8XSeE3tstX/ii/yakxgwG7c+XcF6NDDE7OcDnRoYU6hqYZlBXm
+#        Mj9jep+6hk1txE7SNMiRFOrLS89zIb9jJdy1QoPgiDMkH2B4uq+m11mKQm8ImBk3zpsmm3
+#        NC3HhAWx+7Tqc+4hcBKw3/iUkzhynRCRag714IxHq9QSUMJH4vTmi7U6pS57Mn7hRaOQAA
+#        AMEA02pVoLMNbHE0Li9xsur1WiuQO3uP3c+rLl2TnvGbqHR7gEPADWR8S1Hc+z1I9J1BAD
+#        VBiCukS+5ZU/UJd6TZPNkAO1PwyjuepaWd7ikiQHM7utfMGm49gbbNieokSL9MkwA3IHE7
+#        Awsn0t+KrD405BfijdfSci/nNYYFKdDlaYLxADh2Uxu7o72CuD/pFsk27nfHG+FV5S0YS4
+#        EuebQgb0gepYgAs2pdRjdlwXid5pyERhGAw2mdvOO9VF3f4yKiAAAAwQD9NTusyjAlY4hA
+#        NtJdzuNN9sy/PVw96g5Aw6bREALu/iv6O8i/GNzYkYs/94PT7ha/mQryjU6O2604o4vhRH
+#        +ZteK8rihuAlJ+RlzYYcZG5E5EkzbuxaEaprFDBqp33aIHAFB8Lb28qjgvm7/VWP699A1F
+#        6vmmFX27ReQArI92ZT5CoDq1TM3XvS95n+14hlLuwsDgTpl0iDE2kLWpoxWH69i6L6XI1W
+#        kkJEWyBoqrZaGZOAAcnS1Tejj54l47q7MAAADBAPb+H7TVdaGZHzl0ly1zriw4a7UkhLDt
+#        O7GTC2oULRPKO03CrmNU+SnHApnhHRqywPXhqNwv/oRWm8cSqfFWxp+hHsNDXUfJMv8IEA
+#        HbngnGV3a82j7+l/VJxgZMblDHhD+mzoe3ZRrkymujiaIsrMWNAF3T0x6QD09rsWA9R4ny
+#        ZE1lrg0hB1qDIHI9KraneRB9aDYHA3a6xWQCnVWoRVWYaypAsitebVNUa51r4zkgQanZ04
+#        d/5ey95sW6nHXfXQAAABRtaXRAbWljc29yLmVtLW5ldC5kawECAwQF
+#        -----END OPENSSH PRIVATE KEY-----
+    users:
+      mit:
+        password: changeme
+        authorized-key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDn8GqPn5pCRtb/fNnCOk8L1GRGo9cL6vLj0JHImYy56JHGkDSLLOyw+bre4lRNUU0q3u6RpYafrhv3Rx1fnUKSfIyx2wMh6lr9Akxo2qFLR53uhqCBzJOIMBs41mp5jrmKHWQCVWSLh1aIvqXEdSkukAQGt3C/pPiMFc8oXrTQohgcwGY2/LFB26g948KRJLlMX4yHHZ+tjkvW9PB5wJUW/GJafDajthIDe3adzI5p886eQYSDPoz72zfNere0oxgn6gDb/r1MY3IJkPq8yEeZYmR8v40NObhZ/XYtJiAXAbdTGbQy/Ivlcpn+qxQLmEuJKGuVWyZ4EQR9aIPXZ2v+L0IK8aa3rEOdlKn6iLm960q1UIQdtaqnu8SEqF5uTarmhA60BrCPu5P8iXsow84IvT0S1ImX+U/Ft31gusG0S1zXQdF+cNb+y5UizvRjDE+Bz1F/bbQVcybycxpscEiUjR2Z+FtD3wwr4WhHYsZG8UOTJMP7FT2FF9QNwmxb1Kk= mit@micsor.em-net.dk
+    conversation-files:
+      - ssh_conversations/exit.yaml
+    conversations:
+      - name:  "ls"
+        request-matcher: "ls.*"
+        response:
+          prompt: "foo> "
+          body: |
+            .
+            ..
+            first_filename.txt
+            another-file.txt

@@ -7,13 +7,13 @@ import (
 	"github.com/thorsager/mockdev/configuration"
 	"github.com/thorsager/mockdev/mockhttp"
 	"github.com/thorsager/mockdev/mocksnmp"
+	"github.com/thorsager/mockdev/mockssh"
 	"net/http"
 	"os"
 )
 
 var Version = "*unset*"
 
-// note: https://github.com/gliderlabs/ssh "github.com/gliderlabs/ssh"
 func main() {
 	flag.Usage = func() {
 		_, _ = fmt.Fprintf(flag.CommandLine.Output(), "Usage of %s:\n", os.Args[0])
@@ -43,8 +43,25 @@ func main() {
 		go startHttpService(c, entry)
 	}
 
+	for _, c := range config.Ssh {
+		entry := logger.WithField("type", "ssh")
+		go startSshService(c, entry)
+	}
+
 	// this could be done a lot nicer...
 	select {}
+}
+
+func startSshService(config *mockssh.Configuration, logger *logrus.Entry) {
+	logger.Infof("Server %s listening on %s", config.Name, config.BindAddr)
+	s, err := mockssh.NewServer(config, logger)
+	if err != nil {
+		logger.Error(err)
+	}
+	err = s.ListenAndServe()
+	if err != nil {
+		logger.Error(err)
+	}
 }
 
 func startHttpService(config *mockhttp.Configuration, logger *logrus.Entry) {

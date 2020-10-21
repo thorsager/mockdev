@@ -25,17 +25,8 @@ func Read(filename string) (*Config, error) {
 	for i := 0; i < len(config.Http); i++ {
 		config.Http[i].ConversationFiles = util.MakeFilesAbsolute(path.Dir(filename), config.Http[i].ConversationFiles)
 	}
+	for i := 0; i < len(config.Ssh); i++ {
+		config.Ssh[i].ConversationFiles = util.MakeFilesAbsolute(path.Dir(filename), config.Ssh[i].ConversationFiles)
+	}
 	return config, nil
 }
-
-//func makeFilesAbsolute(cwd string, files[] string) []string {
-//	var absFiles []string
-//	for _,f := range files {
-//		if strings.HasPrefix(f,string(os.PathSeparator)) {
-//			absFiles = append(absFiles,f)
-//		} else {
-//			absFiles = append(absFiles, path.Join(cwd, f))
-//		}
-//	}
-//	return absFiles
-//}
