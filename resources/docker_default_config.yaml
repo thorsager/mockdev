@@ -7,3 +7,41 @@ snmp:
       - ".1.3.6.1.2.1.1.4.0/4/string/https://github.com/thorsager/mockdev"
       - ".1.3.6.1.2.1.1.5.0/4/string/mockdev.local"
       - ".1.3.6.1.2.1.1.6.0/4/string/The World"
+
+http:
+  - name: default
+    bind-addr: ":8080"
+    conversations:
+    - name: "hello world"
+      request:
+        url-matcher:
+          path: /.*
+        method-matcher: .*
+        header-matchers:
+        body-matcher: .*
+      response:
+        status-code: 200
+        headers:
+          - "Content-Type: text/plain"
+        body: Hello World, from mocdevd
+
+ssh:
+  - name: default
+    bind-addr: ":2222"
+    motd: |
+      Welcome to the mockdev ssh server
+      All you find is yours.
+    users:
+      mocker:
+        password: changeme
+    default-prompt: "$ "
+    conversations:
+      - name: exit
+        request-matcher: ^exit$
+        response:
+          body: Thank you for flying mock-dev...
+          terminate-connection: true
+      - name: who
+        request-matcher: who
+        response:
+          body: boo hoo
