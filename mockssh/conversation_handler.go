@@ -1,10 +1,10 @@
 package mockssh
 
 import (
+	"bufio"
 	"github.com/gliderlabs/ssh"
 	"github.com/sirupsen/logrus"
 	"github.com/thorsager/mockdev/logging"
-	"golang.org/x/crypto/ssh/terminal"
 	"regexp"
 	"strings"
 )
@@ -17,36 +17,60 @@ type Handler struct {
 	MOTD          string
 }
 
+var crlf = []byte{'\r', '\n'}
+
+const keyEnter = '\r'
+const newLine = '\n'
+
 func (h *Handler) handle(s ssh.Session) {
-	term := terminal.NewTerminal(s, h.DefaultPrompt)
-	_, err := term.Write(append([]byte(h.MOTD), '\n'))
+	_, err := s.Write(append([]byte(h.MOTD), crlf...))
 	if err != nil {
-		h.Log.Errorf("while writing motd: %s", err)
+		h.Log.Error(err)
 		return
 	}
+
+	_, _ = s.Write([]byte(h.DefaultPrompt))
+
+	br := bufio.NewReader(s)
+
 	for {
-		line, err := term.ReadLine()
+		var line []byte
+		var err error
+		for {
+			var b byte
+			b, err = br.ReadByte()
+			if err != nil {
+				break
+			}
+			if b == keyEnter || b == newLine {
+				_, _ = s.Write(crlf)
+				break
+			} else {
+				_, _ = s.Write([]byte{b})
+				line = append(line, b)
+				h.Log.Tracef("line: %s", line)
+			}
+		}
 		if err != nil {
 			h.Log.Errorf("while reading: %s", err)
 			break
 		}
-		conv := h.findConversation(line)
+		h.Log.Debugf("Got a full line: %s", line)
+
+		conv := h.findConversation(string(line))
 
 		if conv == nil {
-			_, err := term.Write([]byte("I'm no a teapot\n"))
+			h.Log.Warn("no conv, teapot?")
+			_, err = s.Write([]byte("i'm no a teapot\n"))
+			_, _ = s.Write([]byte(h.DefaultPrompt))
 			if err != nil {
 				h.Log.Errorf("while writing: %s", err)
 				break
 			}
-			term.SetPrompt(h.DefaultPrompt)
 		} else {
-			if conv.Response.Prompt != "" {
-				term.SetPrompt(conv.Response.Prompt)
-			} else {
-				term.SetPrompt(h.DefaultPrompt)
-			}
 			if len(conv.Response.Body) > 0 {
-				_, err := term.Write(append([]byte(conv.Response.Body), '\n'))
+				h.Log.Debugf("body: %s", conv.Response.Body)
+				_, err = s.Write(append([]byte(conv.Response.Body), crlf...))
 				if err != nil {
 					h.Log.Errorf("while writing: %s", err)
 					break
@@ -56,10 +80,13 @@ func (h *Handler) handle(s ssh.Session) {
 				h.Log.Info("connection terminated by user.")
 				break
 			}
+			if conv.Response.Prompt != "" {
+				_, _ = s.Write([]byte(conv.Response.Prompt))
+			} else {
+				_, _ = s.Write([]byte(h.DefaultPrompt))
+			}
 		}
-
 	}
-	h.Log.Info("terminal closed")
 }
 
 func (h *Handler) findConversation(line string) *Conversation {
