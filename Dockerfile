@@ -15,7 +15,7 @@ RUN make
 
 
 FROM gcr.io/distroless/static
-USER nonroot
+#USER nonroot
 WORKDIR /
 VOLUME /config
 
