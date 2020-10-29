@@ -43,10 +43,10 @@ func (h ConversationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 		h.Log.Warnf("No matches after body-filter")
 		return
 	}
-	_ = serveResponse(w, r, candidates[0])
+	_ = h.serveResponse(w, r, candidates[0])
 }
 
-func serveResponse(w http.ResponseWriter, _ *http.Request, conversation Conversation) error {
+func (h *ConversationsHandler) serveResponse(w http.ResponseWriter, r *http.Request, conversation Conversation) error {
 	for _, s := range conversation.Response.Headers {
 		addHeaderFromString(w, s)
 	}
@@ -71,6 +71,7 @@ func serveResponse(w http.ResponseWriter, _ *http.Request, conversation Conversa
 		w.WriteHeader(conversation.Response.StatusCode)
 		_, _ = w.Write([]byte(conversation.Response.Body))
 	}
+	h.Log.Infof("Served response from conversation: '%s' (%s)", conversation.Name, r.URL)
 	return nil
 }
 

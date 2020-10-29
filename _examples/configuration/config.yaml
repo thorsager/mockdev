@@ -14,7 +14,7 @@
 
 http:
   - name: default
-    bind-addr: ":8080"
+    bind-addr: ":8180"
     # specify a list of 'conversation' files, these are basically files,
     # containing conversation objects, as the one shown below.
     conversation-files:
