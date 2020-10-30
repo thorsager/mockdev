@@ -18,6 +18,13 @@ type Configuration struct {
 	Users             map[string]Credentials `yaml:"users"`
 	DefaultPrompt     string                 `yaml:"default-prompt"`
 	Motd              string                 `yaml:"motd"`
+	Logging           SessionLogging         `yaml:"session-logging"`
+}
+
+type SessionLogging struct {
+	LogReceived bool   `yaml:"log-received"`
+	LogSent     bool   `yaml:"log-sent"`
+	Location    string `yaml:"location"`
 }
 
 type Credentials struct {

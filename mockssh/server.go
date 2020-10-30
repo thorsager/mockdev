@@ -19,10 +19,13 @@ func NewServer(config *Configuration, logger logging.Logger) (*ssh.Server, error
 	}
 
 	handler := Handler{Conversations: conversations,
-		Log:           logger,
-		Users:         config.Users,
-		DefaultPrompt: config.DefaultPrompt,
-		MOTD:          config.Motd,
+		Log:                logger,
+		Users:              config.Users,
+		DefaultPrompt:      config.DefaultPrompt,
+		MOTD:               config.Motd,
+		SessionLogLocation: config.Logging.Location,
+		SessionLogSent:     config.Logging.LogSent,
+		SessionLogReceived: config.Logging.LogReceived,
 	}
 	s := &ssh.Server{
 		Addr:             config.BindAddr,

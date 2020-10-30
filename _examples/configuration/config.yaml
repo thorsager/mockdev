@@ -41,6 +41,10 @@ ssh:
       Welcome to the mockdev ssh server
       All you find is yours.
     default-prompt: "> "
+    session-logging:
+      log-received: true
+      log-sent: true
+      location: session-logs
     # If no host-keys are passed one is generated on server start
     host-key-files:
       - ssh_host_rsa_key
