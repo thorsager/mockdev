@@ -1,3 +1,4 @@
+loglevel: info
 #snmp:
 #  - name: default
 #    # bind addr and port

@@ -7,7 +7,8 @@ import (
 )
 
 type Config struct {
-	Snmp []*mocksnmp.Configuration `yaml:"snmp"`
-	Http []*mockhttp.Configuration `yaml:"http"`
-	Ssh  []*mockssh.Configuration  `yaml:"ssh"`
+	Loglevel string                    `yaml:"loglevel"`
+	Snmp     []*mocksnmp.Configuration `yaml:"snmp"`
+	Http     []*mockhttp.Configuration `yaml:"http"`
+	Ssh      []*mockssh.Configuration  `yaml:"ssh"`
 }

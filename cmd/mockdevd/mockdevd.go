@@ -26,13 +26,20 @@ func main() {
 	flag.Parse()
 
 	logger := logrus.New()
-	logger.SetLevel(logrus.DebugLevel)
 	logger.Infof("reading config from: %s", configFile)
 	config, err := configuration.Read(configFile)
 	if err != nil {
 		logger.Fatalf("while reading config: %v", err)
 	}
 	logger.Infof("mockdevd v%s starting", Version)
+	level, err := logrus.ParseLevel(config.Loglevel)
+	if err != nil {
+		logger.Warningf("invalid loglevel: '%s' (%v), staying with '%s'", config.Loglevel, err, logger.Level)
+	} else {
+		logger.Infof("setting loglevel %s", level)
+		logger.SetLevel(level)
+	}
+
 	for _, c := range config.Snmp {
 		entry := logger.WithField("type", "snmp")
 		go startSnmpService(c, entry)
@@ -76,7 +83,12 @@ func startHttpService(config *mockhttp.Configuration, logger *logrus.Entry) {
 		}
 	}
 	logger.Infof("Server %s listening on %s", config.Name, config.BindAddr)
-	err := http.ListenAndServe(config.BindAddr, mockhttp.ConversationsHandler{Conversations: conversations, Log: logger})
+	err := http.ListenAndServe(config.BindAddr, &mockhttp.ConversationsHandler{
+		Conversations:      conversations,
+		Log:                logger,
+		SessionLogReceived: config.Logging.LogReceived,
+		SessionLogLocation: config.Logging.Location,
+	})
 	if err != nil {
 		logger.Error(err)
 	}

@@ -163,7 +163,7 @@ func (h *Handler) handle(s ssh.Session) {
 			_, _ = s.Write([]byte(h.DefaultPrompt))
 		} else {
 			if len(conv.Response.Body) > 0 {
-				h.Log.Debugf("body: %s", conv.Response.Body)
+				h.Log.Tracef("body: %s", conv.Response.Body)
 
 				_, err = s.Write(append([]byte(conv.Response.Body), crlf...))
 				if err != nil {
@@ -189,7 +189,7 @@ func (h *Handler) findConversation(line string) *Conversation {
 	for _, conv := range h.Conversations {
 		matcher := regexp.MustCompile(conv.RequestMatcher)
 		if matcher.MatchString(convkey) {
-			h.Log.Infof("matched conv: %s", conv.Name)
+			h.Log.Debugf("matched conv: %s", conv.Name)
 			return &conv
 		}
 	}

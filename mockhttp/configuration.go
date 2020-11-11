@@ -13,6 +13,12 @@ type Configuration struct {
 	BindAddr          string   `yaml:"bind-addr"`
 	ConversationFiles []string `yaml:"conversation-files"`
 	Conversations     []Conversation
+	Logging           SessionLogging `yaml:"session-logging"`
+}
+
+type SessionLogging struct {
+	LogReceived bool   `yaml:"log-received"`
+	Location    string `yaml:"location"`
 }
 
 type Conversation struct {

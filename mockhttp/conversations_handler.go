@@ -1,6 +1,7 @@
 package mockhttp
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/thorsager/mockdev/headerexp"
 	"github.com/thorsager/mockdev/logging"
@@ -9,40 +10,116 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path"
 	"regexp"
 	"strings"
+	"sync"
+	"time"
 )
 
 type ConversationsHandler struct {
-	Conversations []Conversation
-	Log           logging.Logger
+	sync.Mutex
+	Conversations      []Conversation
+	Log                logging.Logger
+	SessionLogLocation string
+	SessionLogReceived bool
+	sessionCounter     int
 }
 
-func (h ConversationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	candidates := filterByMethod(r, h.Conversations)
+func (h *ConversationsHandler) nextSession() int {
+	h.Lock()
+	defer h.Unlock()
+	h.sessionCounter = h.sessionCounter + 1
+	return h.sessionCounter
+}
+
+func (h *ConversationsHandler) sessionFilename(sesId int) string {
+	return path.Join(h.SessionLogLocation, fmt.Sprintf("sess_%.4d.log", sesId))
+}
+
+func (h *ConversationsHandler) initSessionLog(sesId int) error {
+	if h.SessionLogReceived {
+		filename := h.sessionFilename(sesId)
+		h.Log.Debugf("logging session to: %s", filename)
+		err := os.MkdirAll(h.SessionLogLocation, 0770)
+		if err != nil {
+			return err
+		}
+		f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			return err
+		}
+		defer func() { _ = f.Close() }()
+		_, err = f.WriteString(fmt.Sprintf("# session %d, %s \n", sesId, time.Now()))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (h *ConversationsHandler) logRequestBody(sesId int, reader io.Reader) error {
+	if !h.SessionLogReceived {
+		return nil
+	}
+	f, err := os.OpenFile(h.sessionFilename(sesId), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = f.Close() }()
+	_, err = io.Copy(f, reader)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (h *ConversationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	sid := h.nextSession()
+	err := h.initSessionLog(sid)
+	if err != nil {
+		h.Log.Errorf("sessionLogInit: %v", err)
+		http.Error(w, "sessionLogInit: "+err.Error(), 418)
+		return
+	}
+
+	// make body-persistent
+	bodyBytes, _ := ioutil.ReadAll(r.Body)
+	r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+
+	h.Log.Tracef("Request %s %s", r.Method, r.URL)
+	h.Log.Tracef("%s", bodyBytes)
+
+	candidates := h.filterByMethod(r, h.Conversations)
 	if len(candidates) < 1 {
 		http.Error(w, "I'm not a teapot", 418)
 		h.Log.Warnf("Found no Method Matches")
 		return
 	}
-	candidates = filterByUrl(r, candidates)
+	candidates = h.filterByUrl(r, candidates)
 	if len(candidates) < 1 {
 		http.Error(w, "I'm not a teapot", 418)
 		h.Log.Warnf("No matches after url-filter")
 		return
 	}
-	candidates = filterByHeader(r, candidates)
+	candidates = h.filterByHeader(r, candidates)
 	if len(candidates) < 1 {
 		http.Error(w, "I'm not a teapot", 418)
 		h.Log.Warnf("No matches after header-filter")
 		return
 	}
-	candidates = filterByBody(r, candidates)
+	candidates = h.filterByBody(r, candidates)
+	if len(candidates) > 1 {
+		http.Error(w, "I'm not a teapot", 418)
+		h.Log.Warnf("Multiple matches after body-filter")
+		return
+	}
 	if len(candidates) != 1 {
 		http.Error(w, "I'm not a teapot", 418)
 		h.Log.Warnf("No matches after body-filter")
 		return
 	}
+	_ = h.logRequestBody(sid, bytes.NewBuffer(bodyBytes))
 	_ = h.serveResponse(w, r, candidates[0])
 }
 
@@ -80,7 +157,7 @@ func addHeaderFromString(w http.ResponseWriter, s string) {
 	w.Header().Add(t[0], t[1])
 }
 
-func filterByHeader(r *http.Request, candidates []Conversation) []Conversation {
+func (h *ConversationsHandler) filterByHeader(r *http.Request, candidates []Conversation) []Conversation {
 	var filtered []Conversation
 	for _, c := range candidates {
 		if len(c.Request.HeaderMatchers) == 0 {
@@ -95,7 +172,7 @@ func filterByHeader(r *http.Request, candidates []Conversation) []Conversation {
 	return filtered
 }
 
-func filterByMethod(r *http.Request, candidates []Conversation) []Conversation {
+func (h *ConversationsHandler) filterByMethod(r *http.Request, candidates []Conversation) []Conversation {
 	var filtered []Conversation
 	for _, c := range candidates {
 		if c.Request.MethodMatcher == "" {
@@ -110,7 +187,7 @@ func filterByMethod(r *http.Request, candidates []Conversation) []Conversation {
 	return filtered
 }
 
-func filterByBody(r *http.Request, candidates []Conversation) []Conversation {
+func (h *ConversationsHandler) filterByBody(r *http.Request, candidates []Conversation) []Conversation {
 	var filtered []Conversation
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -129,7 +206,7 @@ func filterByBody(r *http.Request, candidates []Conversation) []Conversation {
 	return filtered
 }
 
-func filterByUrl(r *http.Request, candidates []Conversation) []Conversation {
+func (h *ConversationsHandler) filterByUrl(r *http.Request, candidates []Conversation) []Conversation {
 	var filtered []Conversation
 	for _, c := range candidates {
 		if c.Request.UrlMatcher == (UrlMatcher{}) {
