@@ -1,0 +1,26 @@
+name: inspiring_engelbart
+request:
+  url-matcher:
+    path: /bin/a925d3d9-792f-4f98-8a90-7f2849ebe643
+    query: foo=bar
+  method-matcher: POST
+  header-matchers:
+    - 'X-foo: bar'
+    - 'X-Bar: foo'
+  body-matcher: hello Wol-e
+response:
+  status-code: 200
+  headers:
+    - 'Content-Length: 7'
+    - 'Server: Cowboy'
+    - 'Vary: X-HTTP-Method-Override, Accept-Encoding'
+    - 'Etag: W/"7-3HJK8Y+91OWRifX+dopfgxFScFA"'
+    - 'Date: Sun, 04 Oct 2020 16:26:06 GMT'
+    - 'Kong-Cloud-Request-Id: 7081d85a50d7d2b61134de497f754d68'
+    - 'Content-Type: text/html; charset=utf-8'
+    - 'Connection: keep-alive'
+    - 'Via: kong/1.5.0.3-enterprise-edition'
+    - 'X-Kong-Upstream-Status: 200'
+    - 'X-Kong-Upstream-Latency: 20'
+    - 'X-Kong-Proxy-Latency: 0'
+  body: testing
