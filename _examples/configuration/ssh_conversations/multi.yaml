@@ -1,0 +1,37 @@
+- name: "info voice"
+  request-matcher: "info configure voice ont service 1/1/2/3/11 flat"
+  response:
+    body: |
+      info configure voice ont service 1/1/2/3/11 flat
+                                                              ^
+      invalid token
+
+- name: "info qos"
+  request-matcher: "info configure qos interface pon:1/1/2/3 flat"
+  response:
+    body: |
+      configure qos interface pon:1/1/2/3 cac-profile name:FD_GponVideo ds-num-rem-queue not-applicable us-num-queue not-applicable oper-weight 0 oper-rate 0 gem-sharing not-applicable ds-schedule-tag cvlantag
+      #------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+- name: "info equipment"
+  request-matcher: "info configure equipment ont interface 1/1/2/3/11"
+  response:
+    body: |
+      configure equipment ont
+      #------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+      echo "equipment"
+      #------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+      interface 1/1/2/3/11 sw-ver-pland 5800-1.16.4
+        desc1 "ENIIG <SPIR168695><set><12-15-2020_13-47-58>"
+        sernum ICTR:00107424
+        subslocid WILDCARD
+        fec-up disable
+        ont-enable enable
+        sw-dnload-version disabled
+        plnd-var SIP
+        rf-filter pass-none
+        voip-allowed enable
+        log-auth-pwd plain:******
+        admin-state up
+      exit
+      #------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

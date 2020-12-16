@@ -1,11 +1,11 @@
-name: "the file"
-request:
-  url-matcher:
-    path: "/file"
-  method-matcher: GET
-response:
-  status-code: 400
-  headers:
-    - "Content-Type: image/png"
-    - "X-whatever: fooo"
-  body-file: me_gopher.png
+- name: "the file"
+  request:
+    url-matcher:
+      path: "/file"
+    method-matcher: GET
+  response:
+    status-code: 400
+    headers:
+      - "Content-Type: image/png"
+      - "X-whatever: fooo"
+    body-file: me_gopher.png
