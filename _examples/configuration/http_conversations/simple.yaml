@@ -1,10 +1,10 @@
 - name: "the simple"
   request:
     url-matcher:
-      path: "/simple"
+      path: "/simple(.*)"
     method-matcher: GET
   response:
     status-code: 200
     headers:
       - "Content-Type: application/json"
-    body: '{"simple":"response", "integer":10, "boolean": false}'
+    body: '{"simple":"response", "integer":10, "boolean": false, "p1":"{{ .p1}}"}'
