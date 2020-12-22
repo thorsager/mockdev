@@ -3,6 +3,7 @@ package mockssh
 import (
 	"github.com/gliderlabs/ssh"
 	"github.com/thorsager/mockdev/logging"
+	"sort"
 )
 
 func NewServer(config *Configuration, logger logging.Logger) (*ssh.Server, error) {
@@ -14,8 +15,12 @@ func NewServer(config *Configuration, logger logging.Logger) (*ssh.Server, error
 		if err != nil {
 			logger.Error(err)
 		} else {
-			conversations = append(conversations, *con)
+			conversations = append(conversations, con...)
 		}
+	}
+	sort.Slice(conversations, func(i, j int) bool { return conversations[i].Order < conversations[j].Order })
+	for _, c := range conversations {
+		logger.Infof("loaded conversation[%d]: %s", c.Order, c.Name)
 	}
 
 	handler := Handler{Conversations: conversations,

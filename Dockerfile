@@ -1,7 +1,5 @@
-FROM golang:1.15 AS build
-RUN groupadd --non-unique --gid 1001 build-group \
-    && useradd --non-unique -m --uid 1001 --gid 1001 build-user
-
+FROM golang:1.15-alpine3.12 AS build
+RUN apk add --update --no-cache make
 RUN mkdir /build
 WORKDIR /build
 COPY go.mod go.sum /build/
@@ -14,8 +12,7 @@ ADD . /build
 RUN make
 
 
-FROM gcr.io/distroless/static
-#USER nonroot
+FROM alpine:3.12
 WORKDIR /
 VOLUME /config
 

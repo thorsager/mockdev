@@ -23,6 +23,7 @@ type SessionLogging struct {
 
 type Conversation struct {
 	Name     string   `yaml:"name"`
+	Order    int      `yaml:"match-order"`
 	Request  Request  `yaml:"request"`
 	Response Response `yaml:"response"`
 }
@@ -46,19 +47,21 @@ type UrlMatcher struct {
 	Query string `yaml:"query,omitempty"`
 }
 
-func DecodeConversationFile(filename string) (*Conversation, error) {
+func DecodeConversationFile(filename string) ([]Conversation, error) {
 	cff, err := os.Open(filename)
 	if err != nil {
 		return nil, fmt.Errorf("unable to load file '%s':, %w", filename, err)
 	}
 	defer func() { _ = cff.Close() }()
-	var v Conversation
-	err = yaml.NewDecoder(cff).Decode(&v)
+	var vl []Conversation
+	err = yaml.NewDecoder(cff).Decode(&vl)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode conversation in file '%s': %w", filename, err)
 	}
-	if v.Response.BodyFile != "" {
-		v.Response.BodyFile = util.MakeFileAbsolute(filepath.Dir(filename), v.Response.BodyFile)
+	for i := 0; i < len(vl); i++ {
+		if vl[i].Response.BodyFile != "" {
+			vl[i].Response.BodyFile = util.MakeFileAbsolute(filepath.Dir(filename), vl[i].Response.BodyFile)
+		}
 	}
-	return &v, nil
+	return vl, nil
 }

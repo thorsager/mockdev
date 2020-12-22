@@ -1,4 +1,4 @@
-loglevel: info
+loglevel: trace
 #snmp:
 #  - name: default
 #    # bind addr and port
@@ -95,8 +95,10 @@ ssh:
         authorized-key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDn8GqPn5pCRtb/fNnCOk8L1GRGo9cL6vLj0JHImYy56JHGkDSLLOyw+bre4lRNUU0q3u6RpYafrhv3Rx1fnUKSfIyx2wMh6lr9Akxo2qFLR53uhqCBzJOIMBs41mp5jrmKHWQCVWSLh1aIvqXEdSkukAQGt3C/pPiMFc8oXrTQohgcwGY2/LFB26g948KRJLlMX4yHHZ+tjkvW9PB5wJUW/GJafDajthIDe3adzI5p886eQYSDPoz72zfNere0oxgn6gDb/r1MY3IJkPq8yEeZYmR8v40NObhZ/XYtJiAXAbdTGbQy/Ivlcpn+qxQLmEuJKGuVWyZ4EQR9aIPXZ2v+L0IK8aa3rEOdlKn6iLm960q1UIQdtaqnu8SEqF5uTarmhA60BrCPu5P8iXsow84IvT0S1ImX+U/Ft31gusG0S1zXQdF+cNb+y5UizvRjDE+Bz1F/bbQVcybycxpscEiUjR2Z+FtD3wwr4WhHYsZG8UOTJMP7FT2FF9QNwmxb1Kk= mit@micsor.em-net.dk
     conversation-files:
       - ssh_conversations/exit.yaml
+      - ssh_conversations/multi.yaml
     conversations:
       - name:  "ls"
+        match-order: 1000
         request-matcher: "ls.*"
         response:
           prompt: "foo> "

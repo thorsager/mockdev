@@ -1,5 +1,5 @@
-name: "leaving"
-request-matcher: "exit"
-response:
-  body: Don't go away mad.. just go away!
-  terminate-connection: true
+- name: "leaving"
+  request-matcher: "exit"
+  response:
+    body: Don't go away mad.. just go away!
+    terminate-connection: true

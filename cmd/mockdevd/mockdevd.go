@@ -10,6 +10,7 @@ import (
 	"github.com/thorsager/mockdev/mockssh"
 	"net/http"
 	"os"
+	"sort"
 )
 
 var Version = "*unset*"
@@ -79,8 +80,12 @@ func startHttpService(config *mockhttp.Configuration, logger *logrus.Entry) {
 		if err != nil {
 			logger.Error(err)
 		} else {
-			conversations = append(conversations, *con)
+			conversations = append(conversations, con...)
 		}
+	}
+	sort.Slice(conversations, func(i, j int) bool { return conversations[i].Order < conversations[j].Order })
+	for _, c := range conversations {
+		logger.Infof("loaded conversation[%d]: %s", c.Order, c.Name)
 	}
 	logger.Infof("Server %s listening on %s", config.Name, config.BindAddr)
 	err := http.ListenAndServe(config.BindAddr, &mockhttp.ConversationsHandler{

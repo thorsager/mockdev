@@ -1,0 +1,12 @@
+- name: "info voice"
+  request-matcher: "info voice ont"
+  response:
+    body: |
+      voice stuff
+
+- name: "info qos"
+  request-matcher: "info configure qos"
+  response:
+    body: |
+      quos stuff
+

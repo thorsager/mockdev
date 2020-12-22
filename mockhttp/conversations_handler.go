@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"text/template"
 	"time"
 )
 
@@ -127,27 +128,66 @@ func (h *ConversationsHandler) serveResponse(w http.ResponseWriter, r *http.Requ
 	for _, s := range conversation.Response.Headers {
 		addHeaderFromString(w, s)
 	}
+	bodyBuffer := &bytes.Buffer{}
 	if conversation.Response.BodyFile != "" {
-		fi, err := os.Stat(conversation.Response.BodyFile)
-		if err != nil {
-			return err
-		}
-		w.Header().Add("X-JOE", "dalton")
-		w.Header().Add("size", fmt.Sprintf("%d", fi.Size()))
-		w.WriteHeader(conversation.Response.StatusCode)
 		f, err := os.Open(conversation.Response.BodyFile)
 		if err != nil {
 			return err
 		}
 		defer func() { _ = f.Close() }()
-		_, err = io.Copy(w, f)
+		_, err = io.Copy(bodyBuffer, f)
 		if err != nil {
 			return err
 		}
 	} else {
-		w.WriteHeader(conversation.Response.StatusCode)
-		_, _ = w.Write([]byte(conversation.Response.Body))
+		bodyBuffer.Write([]byte(conversation.Response.Body))
 	}
+
+	groups := make(map[string]string)
+
+	if conversation.Request.UrlMatcher.Path != "" {
+		m := regexp.MustCompile(conversation.Request.UrlMatcher.Path)
+		matches := m.FindStringSubmatch(r.URL.Path)
+		for i, j := range matches {
+			h.Log.Debugf("p%d=%s", i, j)
+			groups[fmt.Sprintf("p%d", i)] = j
+		}
+	}
+
+	if conversation.Request.UrlMatcher.Query != "" {
+		m := regexp.MustCompile(conversation.Request.UrlMatcher.Query)
+		matches := m.FindStringSubmatch(r.URL.Path)
+		for i, j := range matches {
+			groups[fmt.Sprintf("q%d", i)] = j
+		}
+	}
+
+	if conversation.Request.BodyMatcher != "" {
+		m := regexp.MustCompile(conversation.Request.BodyMatcher)
+		matches := m.FindStringSubmatch(r.URL.Path)
+		for i, j := range matches {
+			groups[fmt.Sprintf("b%d", i)] = j
+		}
+	}
+
+	// TODO: Figure out how match-groups could be implemented on Header Matchers.
+
+	tmpl, err := template.New("body").Parse(bodyBuffer.String())
+	if err != nil {
+		return err
+	}
+
+	executedBuffer := &bytes.Buffer{}
+	err = tmpl.Execute(executedBuffer, groups)
+	if err != nil {
+		return err
+	}
+
+	w.Header().Add("X-Powered-By", "mockdev")
+	w.Header().Add("size", fmt.Sprintf("%d", executedBuffer.Len()))
+	w.WriteHeader(conversation.Response.StatusCode)
+	_, _ = w.Write(executedBuffer.Bytes())
+
 	h.Log.Infof("Served response from conversation: '%s' (%s)", conversation.Name, r.URL)
 	return nil
 }
