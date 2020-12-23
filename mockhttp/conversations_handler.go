@@ -6,6 +6,7 @@ import (
 	"github.com/thorsager/mockdev/headerexp"
 	"github.com/thorsager/mockdev/logging"
 	"github.com/thorsager/mockdev/queryexp"
+	"github.com/thorsager/mockdev/scripts"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -80,12 +81,18 @@ func (h *ConversationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	err := h.initSessionLog(sid)
 	if err != nil {
 		h.Log.Errorf("sessionLogInit: %v", err)
-		http.Error(w, "sessionLogInit: "+err.Error(), 418)
+		http.Error(w, "while initializing session logging: "+err.Error(), 418)
 		return
 	}
 
-	// make body-persistent
-	bodyBytes, _ := ioutil.ReadAll(r.Body)
+	// get body and re-install
+	bodyBytes, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		h.Log.Errorf("readBody: %v", err)
+		http.Error(w, "while reading request body: "+err.Error(), 418)
+		return
+	}
+	_ = r.Body.Close() //  must close
 	r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
 
 	h.Log.Tracef("Request %s %s", r.Method, r.URL)
@@ -156,17 +163,25 @@ func (h *ConversationsHandler) serveResponse(w http.ResponseWriter, r *http.Requ
 
 	if conversation.Request.UrlMatcher.Query != "" {
 		m := regexp.MustCompile(conversation.Request.UrlMatcher.Query)
-		matches := m.FindStringSubmatch(r.URL.Path)
+		matches := m.FindStringSubmatch(r.URL.RawQuery)
 		for i, j := range matches {
 			groups[fmt.Sprintf("q%d", i)] = j
 		}
 	}
 
 	if conversation.Request.BodyMatcher != "" {
+		// get body and re-install
+		bodyBytes, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			return err
+		}
+		_ = r.Body.Close() //  must close
+		r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+
 		m := regexp.MustCompile(conversation.Request.BodyMatcher)
-		matches := m.FindStringSubmatch(r.URL.Path)
+		matches := m.FindSubmatch(bodyBytes)
 		for i, j := range matches {
-			groups[fmt.Sprintf("b%d", i)] = j
+			groups[fmt.Sprintf("b%d", i)] = string(j)
 		}
 	}
 
@@ -189,7 +204,34 @@ func (h *ConversationsHandler) serveResponse(w http.ResponseWriter, r *http.Requ
 	_, _ = w.Write(executedBuffer.Bytes())
 
 	h.Log.Infof("Served response from conversation: '%s' (%s)", conversation.Name, r.URL)
+
+	h.Log.Info("Executing after-script:")
+	h.executeScript(conversation.AfterScript, groups)
 	return nil
+}
+
+func (h *ConversationsHandler) executeScript(script []string, groups map[string]string) {
+	for _, line := range script {
+		stdout, stderr, err := scripts.Execute(line, groups)
+		h.Log.Infof("* %s\n", line)
+		if err != nil {
+			if len(stdout) > 0 {
+				h.Log.Infof("%s", stdout)
+			}
+			if len(stderr) > 0 {
+				h.Log.Warnf("%s", stderr)
+			}
+			h.Log.Errorf("%s", err)
+			break
+		} else {
+			if len(stdout) > 0 {
+				h.Log.Infof("%s", stdout)
+			}
+			if len(stderr) > 0 {
+				h.Log.Warnf("%s", stderr)
+			}
+		}
+	}
 }
 
 func addHeaderFromString(w http.ResponseWriter, s string) {
@@ -229,10 +271,14 @@ func (h *ConversationsHandler) filterByMethod(r *http.Request, candidates []Conv
 
 func (h *ConversationsHandler) filterByBody(r *http.Request, candidates []Conversation) []Conversation {
 	var filtered []Conversation
+
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		return filtered
 	}
+	_ = r.Body.Close() //  must close
+	r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+
 	for _, c := range candidates {
 		if c.Request.BodyMatcher == "" {
 			filtered = append(filtered, c)

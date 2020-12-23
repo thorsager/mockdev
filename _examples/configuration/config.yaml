@@ -21,6 +21,7 @@ http:
     conversation-files:
       - http_conversations/simple.yaml
       - http_conversations/file.yaml
+      - http_conversations/advanced.yaml
     conversations:
       - name: "hello world"
         request:
@@ -34,6 +35,11 @@ http:
           headers:
             - "Content-Type: text/plain"
           body: Hello World, from mocdevd
+        # all lines in script will be executed as follows: 'sh -c $line'
+        # if any line returns "non zero" the script breaks.
+        after-script:
+          - echo "hello afterscript"
+          - echo "hello $p0 from script..." > file.txt
 
 ssh:
   - name: default

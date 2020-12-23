@@ -1,0 +1,15 @@
+- name: "Create file from body content"
+  request:
+    url-matcher:
+      path: "/a"
+    method-matcher: POST
+    body-matcher: '{.*"id"\s*:\s*(.*)}'
+  response:
+    status-code: 200
+    headers:
+      - "Content-Type: text/plain"
+    body: "{{.p0}} got '{{.b1}}' from: '{{.b0}}'"
+  # After-script, is script-lines, that will be executed "server-side" just prior to the
+  # response.body being returned.  Match-groups are available as env-vars named ex. $b1 and $p1
+  after-script:
+    - echo "$b0" > "$b1.lock"
