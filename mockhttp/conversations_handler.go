@@ -181,6 +181,7 @@ func (h *ConversationsHandler) serveResponse(w http.ResponseWriter, r *http.Requ
 		m := regexp.MustCompile(conversation.Request.BodyMatcher)
 		matches := m.FindSubmatch(bodyBytes)
 		for i, j := range matches {
+			h.Log.Tracef("match-group %d = '%s'", i, string(j))
 			groups[fmt.Sprintf("b%d", i)] = string(j)
 		}
 	}
@@ -203,7 +204,7 @@ func (h *ConversationsHandler) serveResponse(w http.ResponseWriter, r *http.Requ
 	w.WriteHeader(conversation.Response.StatusCode)
 	_, _ = w.Write(executedBuffer.Bytes())
 
-	h.Log.Infof("Served response from conversation: '%s' (%s)", conversation.Name, r.URL)
+	h.Log.Infof("Served response from conversation: '%d:%s' (%s)", conversation.Order, conversation.Name, r.URL)
 
 	h.Log.Info("Executing after-script:")
 	h.executeScript(conversation.AfterScript, groups)
