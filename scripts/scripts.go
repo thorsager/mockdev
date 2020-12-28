@@ -8,12 +8,12 @@ import (
 	"os/exec"
 )
 
-//var argSplitter = regexp.MustCompile(`[^\s"]+|"([^"]*)"`)
+var Shell = "/bin/sh"
 
 func Execute(script string, envVars map[string]string) ([]byte, []byte, error) {
 	var envVarList = asVarList(envVars)
 	//args := argSplitter.FindAllString(l, -1)
-	cmd := exec.CommandContext(context.Background(), "sh", "-c", script)
+	cmd := exec.CommandContext(context.Background(), Shell, "-c", script)
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, nil, err
