@@ -124,7 +124,7 @@ func (h *ConversationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	}
 	if len(candidates) != 1 {
 		http.Error(w, "I'm not a teapot", 418)
-		h.Log.Warnf("No matches after body-filter")
+		h.Log.Warnf("No matches after body-filter: %s \n%s", r.URL.Path, string(bodyBytes))
 		return
 	}
 	_ = h.logRequestBody(sid, bytes.NewBuffer(bodyBytes))
@@ -206,30 +206,32 @@ func (h *ConversationsHandler) serveResponse(w http.ResponseWriter, r *http.Requ
 
 	h.Log.Infof("Served response from conversation: '%d:%s' (%s)", conversation.Order, conversation.Name, r.URL)
 
-	h.Log.Info("Executing after-script:")
 	h.executeScript(conversation.AfterScript, groups)
 	return nil
 }
 
 func (h *ConversationsHandler) executeScript(script []string, groups map[string]string) {
-	for _, line := range script {
-		stdout, stderr, err := scripts.Execute(line, groups)
-		h.Log.Infof("* %s\n", line)
-		if err != nil {
-			if len(stdout) > 0 {
-				h.Log.Infof("%s", stdout)
-			}
-			if len(stderr) > 0 {
-				h.Log.Warnf("%s", stderr)
-			}
-			h.Log.Errorf("%s", err)
-			break
-		} else {
-			if len(stdout) > 0 {
-				h.Log.Infof("%s", stdout)
-			}
-			if len(stderr) > 0 {
-				h.Log.Warnf("%s", stderr)
+	if len(script) > 0 {
+		h.Log.Info("Executing after-script:")
+		for _, line := range script {
+			stdout, stderr, err := scripts.Execute(line, groups)
+			h.Log.Infof("* %s\n", line)
+			if err != nil {
+				if len(stdout) > 0 {
+					h.Log.Infof("%s", stdout)
+				}
+				if len(stderr) > 0 {
+					h.Log.Warnf("%s", stderr)
+				}
+				h.Log.Errorf("%s", err)
+				break
+			} else {
+				if len(stdout) > 0 {
+					h.Log.Infof("%s", stdout)
+				}
+				if len(stderr) > 0 {
+					h.Log.Warnf("%s", stderr)
+				}
 			}
 		}
 	}
