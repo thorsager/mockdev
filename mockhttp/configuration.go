@@ -22,10 +22,11 @@ type SessionLogging struct {
 }
 
 type Conversation struct {
-	Name     string   `yaml:"name"`
-	Order    int      `yaml:"match-order"`
-	Request  Request  `yaml:"request"`
-	Response Response `yaml:"response"`
+	Name        string   `yaml:"name"`
+	Order       int      `yaml:"match-order"`
+	Request     Request  `yaml:"request"`
+	Response    Response `yaml:"response"`
+	AfterScript []string `yaml:"after-script"`
 }
 
 type Request struct {

@@ -33,7 +33,15 @@ func main() {
 		logger.Fatalf("while reading config: %v", err)
 	}
 	logger.Infof("mockdevd v%s starting", Version)
-	level, err := logrus.ParseLevel(config.Loglevel)
+
+	// get log-level from config, but overwrite from env, if found.
+	logLevelString := config.Loglevel
+	if v, found := os.LookupEnv("LOG_LEVEL"); found {
+		logger.Info("overriding loglevel from environment.")
+		logLevelString = v
+	}
+
+	level, err := logrus.ParseLevel(logLevelString)
 	if err != nil {
 		logger.Warningf("invalid loglevel: '%s' (%v), staying with '%s'", config.Loglevel, err, logger.Level)
 	} else {
