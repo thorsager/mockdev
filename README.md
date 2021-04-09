@@ -39,7 +39,7 @@ snmpwalk -v 2c -c public localhost
 docker run -v `pwd`:/tmp $DOCKER_IMAGE snmp-snapshot -v -n -f -o /tmp/snapshot.txt -c $COMMUNITY $HOST 
 ```
 
-h1. Match-groups in HTTP conversations
+# Match-groups in HTTP conversations
 Match-groups found to the `path-matcher` or `body-matcher` are available in the `response.body` using go-tempting.
 Groups from the `path-matcher` are available as `{{ .p<number> }} {{ .b<number> }}` where `<number>` is the number of 
 the match-group, and `p` denotes that it is groups from the `path-matcher`, `b` denotes that it is groups from the 
