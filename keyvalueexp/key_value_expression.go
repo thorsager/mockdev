@@ -38,6 +38,22 @@ func (ke *KeyValueExpr) MatchMap(m map[string]string) bool {
 	return true
 }
 
+func (ke *KeyValueExpr) MatchIfPresentMap(m map[string]string) bool {
+	if len(m) == 0 && len(ke.paramMatchers) != 0 {
+		return false // no params but we have matchers
+	}
+	for k, matcher := range ke.paramMatchers {
+		v, ok := m[k]
+		if !ok {
+			continue
+		}
+		if !matcher.MatchString(v) {
+			return false // value does not match
+		}
+	}
+	return true
+}
+
 // MustCompile, this performs the same function as Compile, but it will panic if
 // unable to successfully Compile.
 func MustCompile(keyValue map[string]string) *KeyValueExpr {

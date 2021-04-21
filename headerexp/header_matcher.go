@@ -27,13 +27,15 @@ func (q *HeaderExpr) MatchString(headerStrings ...string) bool {
 }
 
 // MatchHeader will match the http.Header structure against the HeaderExpr,
-// and return true if all parameters are matched, if not false is returned
+// and return true all headers present in the request matches a HeaderExpr if one is
+// found for the specific header. If no HeaderExpr is found for a passed header it
+// is ignored thus will *not* fail the match.
 func (q *HeaderExpr) MatchHeader(h http.Header) bool {
 	m := make(map[string]string)
 	for k, v := range h {
 		m[k] = v[0]
 	}
-	return q.MatchMap(m)
+	return q.MatchIfPresentMap(m)
 }
 
 // Compile, will create a HeaderExpr from a string in URL query format, but with
