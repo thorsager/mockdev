@@ -19,6 +19,9 @@ jobs:
           fetch-depth: 0
       - name: Build image
         run: |
+          echo "------"
+          ls -al
+          echo "------"
           docker build . --tag "${IMAGE_NAME}:${IMAGE_TAG}"
 
       - name: Push image
