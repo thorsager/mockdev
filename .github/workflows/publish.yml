@@ -8,10 +8,11 @@ on:
 jobs:
   publish-docker-image:
     runs-on: ubuntu-latest
-      env:
-        PAT: ${{ secrets.PAT }}
-        IMAGE_NAME: ghcr.io/thorsager/mockdev
-        IMAGE_TAG: latest
+    env:
+      PAT: ${{ secrets.PAT }}
+      IMAGE_NAME: ghcr.io/thorsager/mockdev
+      IMAGE_TAG: latest
+
     steps:
       - uses: actions/checkout@v2
       - name: Build image
