@@ -32,7 +32,7 @@ func main() {
 	if err != nil {
 		logger.Fatalf("while reading config: %v", err)
 	}
-	logger.Infof("mockdevd v%s starting", Version)
+	logger.Infof("mockdevd %s starting", Version)
 
 	// get log-level from config, but overwrite from env, if found.
 	logLevelString := config.Loglevel

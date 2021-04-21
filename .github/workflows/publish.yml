@@ -2,8 +2,8 @@ name: publish
 
 on:
   push:
-#    branches:
-#    - master
+    branches:
+      - master
 
 jobs:
   publish-docker-image:
@@ -21,6 +21,6 @@ jobs:
 
       - name: Push image
         run: |
-          echo ${PAT} | docker login ghcr.io -u thorsgaer --password-stdin
+          echo ${PAT} | docker login ghcr.io -u thorsager --password-stdin
           docker push "${IMAGE_NAME}:${IMAGE_TAG}"
 
