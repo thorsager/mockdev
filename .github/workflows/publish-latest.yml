@@ -1,0 +1,28 @@
+name: publish-tag
+
+on:
+  push:
+    branches-ignore:
+      - '**'
+    tags:
+      - 'v*'
+
+jobs:
+  publish-docker-image:
+    runs-on: ubuntu-latest
+    env:
+      PAT: ${{ secrets.PAT }}
+      IMAGE_NAME: ghcr.io/thorsager/mockdev
+      IMAGE_TAG: ${{ github.ref }}
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build image
+        run: |
+          docker build . --tag "${IMAGE_NAME}:${IMAGE_TAG}"
+
+      - name: Push image
+        run: |
+          echo ${PAT} | docker login ghcr.io -u thorsager --password-stdin
+          docker push "${IMAGE_NAME}:${IMAGE_TAG}"
+
