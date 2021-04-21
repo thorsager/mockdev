@@ -7,10 +7,6 @@ RUN go list -m all
 RUN go mod download
 
 ADD . /build
-RUN echo "**********"
-RUN ls -al
-RUN echo "**********"
-RUN git status
 RUN make
 
 
