@@ -6,7 +6,7 @@ BIN_PATH = bin
 BIN_SNMP_SNAPSHOT = $(BIN_PATH)/snmp-snapshot
 BIN_HTTP_DUMP = $(BIN_PATH)/http-dump
 BIN_FAKEITD = $(BIN_PATH)/mockdevd
-VERSION ?= $(shell git describe --tags --always --dirty --match=v* 2> /dev/null || echo v0)
+VERSION ?= $(shell git describe --tags --always --dirty 2> /dev/null || echo v0)
 LDFLAGS = -w -extldflags -static
 
 .PHONY: all
