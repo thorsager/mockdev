@@ -22,5 +22,5 @@ jobs:
       - name: Push image
         run: |
           echo ${PAT} | docker login ghcr.io -u thorsgaer --password-stdin
-          docker push "${IMAG_NAME}:${IMAGE_TAG}"
+          docker push "${IMAGE_NAME}:${IMAGE_TAG}"
 
