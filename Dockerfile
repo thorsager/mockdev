@@ -1,5 +1,5 @@
 FROM golang:1.15-alpine3.12 AS build
-RUN apk add --update --no-cache make
+RUN apk add --update --no-cache make git
 RUN mkdir /build
 WORKDIR /build
 COPY go.mod go.sum /build/
@@ -13,7 +13,7 @@ RUN make
 
 
 FROM alpine:3.12
-LABEL org.opencontainers.image.source https://github.com/thorsager/mockdev
+LABEL org.opencontainers.image.source=https://github.com/thorsager/mockdev
 WORKDIR /
 VOLUME /config
 
