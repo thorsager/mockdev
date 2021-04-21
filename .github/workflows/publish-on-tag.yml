@@ -16,6 +16,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - name: Get tag name
         id: get_tag_name
