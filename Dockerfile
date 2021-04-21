@@ -3,8 +3,6 @@ RUN apk add --update --no-cache make git
 RUN mkdir /build
 WORKDIR /build
 COPY go.mod go.sum /build/
-RUN pwd
-RUN ls -l
 RUN go list -m all
 RUN go mod download
 
