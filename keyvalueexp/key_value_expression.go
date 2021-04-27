@@ -16,7 +16,7 @@ type KeyValueExpr struct {
 	paramMatchers matcherMap
 }
 
-// MatchMap, will compare all values, against the matching regexp.Regexp in the map
+// MatchMap will compare all values, against the matching regexp.Regexp in the map
 // regexp.Regexp and value, are "mapped" on the map key value, all keys in the passed value
 // map are checked. If a key from the passed map, does not have a corresponding key
 // and regexp.Regexp the will return false, also if a regexp.Regexp is found but
@@ -54,7 +54,7 @@ func (ke *KeyValueExpr) MatchIfPresentMap(m map[string]string) bool {
 	return true
 }
 
-// MustCompile, this performs the same function as Compile, but it will panic if
+// MustCompile this performs the same function as Compile, but it will panic if
 // unable to successfully Compile.
 func MustCompile(keyValue map[string]string) *KeyValueExpr {
 	e, err := Compile(keyValue)
