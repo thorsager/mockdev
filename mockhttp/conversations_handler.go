@@ -108,30 +108,6 @@ func (h *ConversationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	h.Log.Tracef("%s", bodyBytes)
 
 	candidates := h.filterConversations(ctx, r)
-	//candidates := h.filterByMethod(r, h.Conversations)
-	//if len(candidates) < 1 {
-	//	http.Error(w, "I'm not a teapot", 418)
-	//	h.Log.Warnf("Found no Method Matches")
-	//	return
-	//}
-	//candidates = h.filterByUrl(r, candidates)
-	//if len(candidates) < 1 {
-	//	http.Error(w, "I'm not a teapot", 418)
-	//	h.Log.Warnf("No matches after url-filter")
-	//	return
-	//}
-	//candidates = h.filterByHeader(r, candidates)
-	//if len(candidates) < 1 {
-	//	http.Error(w, "I'm not a teapot", 418)
-	//	h.Log.Warnf("No matches after header-filter")
-	//	return
-	//}
-	//candidates = h.filterByBody(r, candidates)
-	//if len(candidates) > 1 {
-	//	http.Error(w, "I'm not a teapot", 418)
-	//	h.Log.Warnf("Multiple matches after body-filter")
-	//	return
-	//}
 	if len(candidates) < 1 {
 		http.Error(w, "I'm not a teapot", 418)
 		h.Log.Warnf("No matches after conversation-filter: %s \n%s", r.URL.Path, string(bodyBytes))
