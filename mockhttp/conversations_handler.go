@@ -2,6 +2,7 @@ package mockhttp
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"github.com/thorsager/mockdev/headerexp"
 	"github.com/thorsager/mockdev/logging"
@@ -28,22 +29,26 @@ type ConversationsHandler struct {
 	sessionCounter     int
 }
 
-func (h *ConversationsHandler) nextSession() int {
+func (h *ConversationsHandler) sessionContext() context.Context {
 	h.Lock()
 	defer h.Unlock()
 	h.sessionCounter = h.sessionCounter + 1
-	return h.sessionCounter
+	return contextWithWithSessionId(h.sessionCounter)
 }
 
 func (h *ConversationsHandler) sessionFilename(sesId int) string {
 	return path.Join(h.SessionLogLocation, fmt.Sprintf("sess_%.4d.log", sesId))
 }
 
-func (h *ConversationsHandler) initSessionLog(sesId int) error {
+func (h *ConversationsHandler) initSessionLog(ctx context.Context) error {
 	if h.SessionLogReceived {
+		sesId, err := getSessionId(ctx)
+		if err != nil {
+			return err
+		}
 		filename := h.sessionFilename(sesId)
 		h.Log.Debugf("logging session to: %s", filename)
-		err := os.MkdirAll(h.SessionLogLocation, 0770)
+		err = os.MkdirAll(h.SessionLogLocation, 0770)
 		if err != nil {
 			return err
 		}
@@ -60,9 +65,13 @@ func (h *ConversationsHandler) initSessionLog(sesId int) error {
 	return nil
 }
 
-func (h *ConversationsHandler) logRequestBody(sesId int, reader io.Reader) error {
+func (h *ConversationsHandler) logRequestBody(ctx context.Context, reader io.Reader) error {
 	if !h.SessionLogReceived {
 		return nil
+	}
+	sesId, err := getSessionId(ctx)
+	if err != nil {
+		return err
 	}
 	f, err := os.OpenFile(h.sessionFilename(sesId), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
@@ -77,8 +86,8 @@ func (h *ConversationsHandler) logRequestBody(sesId int, reader io.Reader) error
 }
 
 func (h *ConversationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	sid := h.nextSession()
-	err := h.initSessionLog(sid)
+	ctx := h.sessionContext()
+	err := h.initSessionLog(ctx)
 	if err != nil {
 		h.Log.Errorf("sessionLogInit: %v", err)
 		http.Error(w, "while initializing session logging: "+err.Error(), 418)
@@ -98,37 +107,41 @@ func (h *ConversationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	h.Log.Tracef("Request %s %s", r.Method, r.URL)
 	h.Log.Tracef("%s", bodyBytes)
 
-	candidates := h.filterByMethod(r, h.Conversations)
+	candidates := h.filterConversations(ctx, r)
 	if len(candidates) < 1 {
 		http.Error(w, "I'm not a teapot", 418)
-		h.Log.Warnf("Found no Method Matches")
+		h.Log.Warnf("No matches after conversation-filter: %s \n%s", r.URL.Path, string(bodyBytes))
 		return
 	}
-	candidates = h.filterByUrl(r, candidates)
-	if len(candidates) < 1 {
+	score, _ := getConversationScores(ctx)
+	h.Log.Debugf("scoreKey: %#v", score)
+	theOne, err := score.tieBreak(candidates)
+	if err != nil {
 		http.Error(w, "I'm not a teapot", 418)
-		h.Log.Warnf("No matches after url-filter")
+		h.Log.Warnf("No matches after conversation-scoring: %s \n%s", r.URL.Path, string(bodyBytes))
 		return
 	}
-	candidates = h.filterByHeader(r, candidates)
-	if len(candidates) < 1 {
-		http.Error(w, "I'm not a teapot", 418)
-		h.Log.Warnf("No matches after header-filter")
-		return
+
+	_ = h.logRequestBody(ctx, bytes.NewBuffer(bodyBytes))
+	_ = h.serveResponse(w, r, theOne)
+}
+
+func (h *ConversationsHandler) filterConversations(ctx context.Context, r *http.Request) []Conversation {
+	candidates := h.filterByMethod(ctx, r, h.Conversations)
+
+	if len(candidates) > 0 {
+		candidates = h.filterByUrl(ctx, r, candidates)
 	}
-	candidates = h.filterByBody(r, candidates)
-	if len(candidates) > 1 {
-		http.Error(w, "I'm not a teapot", 418)
-		h.Log.Warnf("Multiple matches after body-filter")
-		return
+	if len(candidates) > 0 {
+		candidates = h.filterByHeader(ctx, r, candidates)
 	}
-	if len(candidates) != 1 {
-		http.Error(w, "I'm not a teapot", 418)
-		h.Log.Warnf("No matches after body-filter: %s \n%s", r.URL.Path, string(bodyBytes))
-		return
+	if len(candidates) > 0 {
+		candidates = h.filterByHeader(ctx, r, candidates)
 	}
-	_ = h.logRequestBody(sid, bytes.NewBuffer(bodyBytes))
-	_ = h.serveResponse(w, r, candidates[0])
+	if len(candidates) > 0 {
+		candidates = h.filterByBody(ctx, r, candidates)
+	}
+	return candidates
 }
 
 func (h *ConversationsHandler) serveResponse(w http.ResponseWriter, r *http.Request, conversation Conversation) error {
@@ -242,7 +255,8 @@ func addHeaderFromString(w http.ResponseWriter, s string) {
 	w.Header().Add(t[0], t[1])
 }
 
-func (h *ConversationsHandler) filterByHeader(r *http.Request, candidates []Conversation) []Conversation {
+func (h *ConversationsHandler) filterByHeader(ctx context.Context, r *http.Request, candidates []Conversation) []Conversation {
+	score, _ := getConversationScores(ctx)
 	var filtered []Conversation
 	for _, c := range candidates {
 		if len(c.Request.HeaderMatchers) == 0 {
@@ -252,12 +266,14 @@ func (h *ConversationsHandler) filterByHeader(r *http.Request, candidates []Conv
 		headers := headerexp.MustCompile(c.Request.HeaderMatchers...)
 		if headers.MatchHeader(r.Header) {
 			filtered = append(filtered, c)
+			score.inc(c.Name)
 		}
 	}
 	return filtered
 }
 
-func (h *ConversationsHandler) filterByMethod(r *http.Request, candidates []Conversation) []Conversation {
+func (h *ConversationsHandler) filterByMethod(ctx context.Context, r *http.Request, candidates []Conversation) []Conversation {
+	score, _ := getConversationScores(ctx)
 	var filtered []Conversation
 	for _, c := range candidates {
 		if c.Request.MethodMatcher == "" {
@@ -267,12 +283,14 @@ func (h *ConversationsHandler) filterByMethod(r *http.Request, candidates []Conv
 		method := regexp.MustCompile(c.Request.MethodMatcher)
 		if method.MatchString(r.Method) {
 			filtered = append(filtered, c)
+			score.inc(c.Name)
 		}
 	}
 	return filtered
 }
 
-func (h *ConversationsHandler) filterByBody(r *http.Request, candidates []Conversation) []Conversation {
+func (h *ConversationsHandler) filterByBody(ctx context.Context, r *http.Request, candidates []Conversation) []Conversation {
+	score, _ := getConversationScores(ctx)
 	var filtered []Conversation
 
 	body, err := ioutil.ReadAll(r.Body)
@@ -290,12 +308,14 @@ func (h *ConversationsHandler) filterByBody(r *http.Request, candidates []Conver
 		method := regexp.MustCompile(c.Request.BodyMatcher)
 		if method.Match(body) {
 			filtered = append(filtered, c)
+			score.inc(c.Name)
 		}
 	}
 	return filtered
 }
 
-func (h *ConversationsHandler) filterByUrl(r *http.Request, candidates []Conversation) []Conversation {
+func (h *ConversationsHandler) filterByUrl(ctx context.Context, r *http.Request, candidates []Conversation) []Conversation {
+	score, _ := getConversationScores(ctx)
 	var filtered []Conversation
 	for _, c := range candidates {
 		if c.Request.UrlMatcher == (UrlMatcher{}) {
@@ -307,12 +327,14 @@ func (h *ConversationsHandler) filterByUrl(r *http.Request, candidates []Convers
 		if c.Request.UrlMatcher.Path != "" {
 			urlPath := regexp.MustCompile(c.Request.UrlMatcher.Path)
 			pathMatch = urlPath.MatchString(r.URL.Path)
+			score.inc(c.Name)
 		}
 
 		queryMatch := true
 		if c.Request.UrlMatcher.Query != "" {
 			urlQuery := queryexp.MustCompile(c.Request.UrlMatcher.Query)
 			queryMatch = urlQuery.MatchQuery(r.URL.Query())
+			score.inc(c.Name)
 		}
 
 		if pathMatch && queryMatch {

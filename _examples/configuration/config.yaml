@@ -40,6 +40,19 @@ http:
         after-script:
           - echo "hello afterscript"
           - echo "hello $p0 from script..." > file.txt
+      - name: "hello world (cool)"
+        request:
+          url-matcher:
+            path: /hello
+            query: cool=.*
+          method-matcher: .*
+          header-matchers:
+          body-matcher: .*
+        response:
+          status-code: 200
+          headers:
+            - "Content-Type: text/plain"
+          body: Hello World, cool, from mocdevd
 
 ssh:
   - name: default
