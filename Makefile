@@ -14,7 +14,7 @@ all: test snmp-snapshot mockdevd http-dump
 
 .PHONY: test
 test:
-	$(GO_TEST) ./...
+	CGO_ENABLED=0 $(GO_TEST) ./...
 
 .PHONY: snmp-snapshot
 snmp-snapshot:
