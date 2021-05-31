@@ -1,0 +1,15 @@
+- name: "Do Loose matching on query"
+  request:
+    url-matcher:
+      path: "/loose"
+      # This will cause the match on query to be _loose_ meaning that only parameters
+      # that have matchers are validated, additional query params in request will be
+      # disregarded.
+      query-loose-match: true
+      query: "a=^.*$&b=^.*"
+    method-matcher: GET
+  response:
+    status-code: 200
+    headers:
+      - "Content-Type: text/plain"
+    body: "You it matched"

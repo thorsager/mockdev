@@ -11,8 +11,9 @@ type QueryExpr struct {
 	*keyvalueexp.KeyValueExpr
 }
 
-// MatchString, will match against the query part of an URL, return true
-// if all parameters are matched, if not false is returned
+// MatchString will assume that string contains an url.URL and match
+// against the query part of an URL, return true if all parameters are
+//matched, if not false is returned
 func (q *QueryExpr) MatchString(s string) bool {
 	u := url.URL{RawQuery: s}
 	return q.MatchUrl(u)
@@ -34,7 +35,33 @@ func (q *QueryExpr) MatchQuery(v url.Values) bool {
 	return q.MatchMap(m)
 }
 
-// Compile, will create a QueryExpr from a string in URL query format, but with
+// ContainedInString will assume that s contains a url.URL and  match the URL.Query()
+// against the QueryExpr, and return  true if all parameter regexp.Regexp are matched,
+// ignoring any additional parameters that might be found in the url.Values
+func (q *QueryExpr) ContainedInString(s string) bool {
+	u := url.URL{RawQuery: s}
+	return q.ContainedInUrl(u)
+}
+
+// ContainedInUrl will match the URL.Query() against the QueryExpr, and return
+// true if all parameter regexp.Regexp are matched, ignoring any additional
+// parameters that might be found in the url.Values
+func (q *QueryExpr) ContainedInUrl(u url.URL) bool {
+	return q.ContainedInQuery(u.Query())
+}
+
+// ContainedInQuery will match the URL.Values against the QueryExpr, and return
+// true if all parameter regexp.Regexp are matched, ignoring any additional
+// parameters that might be found in the url.Values
+func (q *QueryExpr) ContainedInQuery(v url.Values) bool {
+	m := make(map[string]string)
+	for k, v := range v {
+		m[k] = v[0]
+	}
+	return q.ContainedInMap(m)
+}
+
+// Compile will create a QueryExpr from a string in URL query format, but with
 // the twist that all parameter will be treated as a RegularExpression.
 // ex.
 // 'foo=^[a-z]{2}$&bar=^.^$'

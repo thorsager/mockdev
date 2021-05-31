@@ -38,6 +38,11 @@ func (ke *KeyValueExpr) MatchMap(m map[string]string) bool {
 	return true
 }
 
+// MatchIfPresentMap will iterate all regexp.Regexp in the Matcher against any values
+// that are found in the value map. If a regexp.Regexp, does not have a corresponding value
+// in the value-map the matcher is skipped. MatchIfPresentMap will return false if a
+// regexp.Regexp has a mapped value, but the value is not Matched my the regexp.Regexp
+// other wise the matcher will return true.
 func (ke *KeyValueExpr) MatchIfPresentMap(m map[string]string) bool {
 	if len(m) == 0 && len(ke.paramMatchers) != 0 {
 		return false // no params but we have matchers
@@ -54,6 +59,28 @@ func (ke *KeyValueExpr) MatchIfPresentMap(m map[string]string) bool {
 	return true
 }
 
+// ContainedInMap will iterate all regexp.Regexp in the Matcher and match against values.
+// If no value is found the ContainedInMap will return false, also if a regexp.Regexp does
+// not match false will be returned. I all regexp.Regexp matches are made true is returned,
+// and the reset of the map will be disregarded.
+func (ke *KeyValueExpr) ContainedInMap(m map[string]string) bool {
+	for k, matcher := range ke.paramMatchers {
+		v, ok := m[k]
+		if !ok {
+			return false // no value found == missing param
+		}
+		if !matcher.MatchString(v) {
+			return false // value does not match
+		}
+	}
+	return true
+}
+
+// MatcherCount will return the number of regexp.Regexp in the Matcher.
+func (ke *KeyValueExpr) MatcherCount() int {
+	return len(ke.paramMatchers)
+}
+
 // MustCompile this performs the same function as Compile, but it will panic if
 // unable to successfully Compile.
 func MustCompile(keyValue map[string]string) *KeyValueExpr {
@@ -64,7 +91,7 @@ func MustCompile(keyValue map[string]string) *KeyValueExpr {
 	return e
 }
 
-// Compile, compiles a map[string]string into a *KeyValueExpr, this is done by
+// Compile compiles a map[string]string into a *KeyValueExpr, this is done by
 // using regexp.Compile on all values in the passed map. If unable to do regexp.Compile
 // on any of the map values, an error is returned, and the pointer returned will be nil
 // ex.

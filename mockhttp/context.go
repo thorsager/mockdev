@@ -47,12 +47,16 @@ func getContextValueAsInt(ctx context.Context, key interface{}) (int, error) {
 	}
 }
 
-func (s *conversationScores) inc(name string) {
+func (s *conversationScores) bump(name string, cnt int) {
 	if v, found := s.values[name]; found {
-		s.values[name] = v + 1
+		s.values[name] = v + cnt
 	} else {
-		s.values[name] = 1
+		s.values[name] = cnt
 	}
+}
+
+func (s *conversationScores) inc(name string) {
+	s.bump(name, 1)
 }
 
 func (s *conversationScores) tieBreak(candidates []Conversation) (Conversation, error) {
