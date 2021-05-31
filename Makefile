@@ -10,7 +10,11 @@ VERSION ?= $(shell git describe --tags --always --dirty 2> /dev/null || echo v0)
 LDFLAGS = -w -extldflags -static
 
 .PHONY: all
-all: snmp-snapshot mockdevd http-dump
+all: test snmp-snapshot mockdevd http-dump
+
+.PHONY: test
+test:
+	$(GO_TEST) ./...
 
 .PHONY: snmp-snapshot
 snmp-snapshot:

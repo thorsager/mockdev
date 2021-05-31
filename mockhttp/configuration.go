@@ -44,8 +44,9 @@ type Response struct {
 }
 
 type UrlMatcher struct {
-	Path  string `yaml:"path,omitempty"`
-	Query string `yaml:"query,omitempty"`
+	Path            string `yaml:"path,omitempty"`
+	Query           string `yaml:"query,omitempty"`
+	QueryLooseMatch bool   `yaml:"query-loose-match"`
 }
 
 func DecodeConversationFile(filename string) ([]Conversation, error) {

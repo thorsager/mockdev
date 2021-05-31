@@ -326,15 +326,22 @@ func (h *ConversationsHandler) filterByUrl(ctx context.Context, r *http.Request,
 		pathMatch := true
 		if c.Request.UrlMatcher.Path != "" {
 			urlPath := regexp.MustCompile(c.Request.UrlMatcher.Path)
-			pathMatch = urlPath.MatchString(r.URL.Path)
-			score.inc(c.Name)
+			if pathMatch = urlPath.MatchString(r.URL.Path); pathMatch {
+				score.inc(c.Name)
+			}
 		}
 
 		queryMatch := true
 		if c.Request.UrlMatcher.Query != "" {
 			urlQuery := queryexp.MustCompile(c.Request.UrlMatcher.Query)
-			queryMatch = urlQuery.MatchQuery(r.URL.Query())
-			score.inc(c.Name)
+			if c.Request.UrlMatcher.QueryLooseMatch {
+				queryMatch = urlQuery.ContainedInQuery(r.URL.Query())
+			} else {
+				queryMatch = urlQuery.MatchQuery(r.URL.Query())
+			}
+			if queryMatch {
+				score.bump(c.Name, urlQuery.MatcherCount())
+			}
 		}
 
 		if pathMatch && queryMatch {

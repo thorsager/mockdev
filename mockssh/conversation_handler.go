@@ -214,7 +214,7 @@ func (h *Handler) publicKeyHandler(ctx ssh.Context, pk ssh.PublicKey) bool {
 		}
 		ak, _, _, _, err := ssh.ParseAuthorizedKey([]byte(cred.AuthorizedKey))
 		if err != nil {
-			logrus.Warn("unable to parse authorized key: %s", err)
+			logrus.Warnf("unable to parse authorized key: %s", err)
 			return false
 		}
 		if ssh.KeysEqual(ak, pk) {
