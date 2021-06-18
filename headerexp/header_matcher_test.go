@@ -54,11 +54,39 @@ func TestHeaderExpr_MatchString(t *testing.T) {
 		{"single-number_fail", fields{a("foo:^\\d$")}, args{a("Foo:13")}, false},
 		{"multi", fields{a("f:^\\d$", "d:^\\w+$")}, args{a("F: 3", "d:X")}, true},
 		{"multi_fail", fields{a("f:^\\d$", "d:^\\w+$")}, args{a("F: b", "d:X")}, false},
+		{"some", fields{a("hdr:.*")}, args{a("F: b")}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			q := MustCompile(tt.fields.expr...)
 			if got := q.MatchString(tt.args.headerStrings...); got != tt.want {
+				t.Errorf("MatchString() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestHeaderExpr_MatchStringExact(t *testing.T) {
+	type fields struct {
+		expr []string
+	}
+	type args struct {
+		headerStrings []string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{"none", fields{a("hdr:.*")}, args{a("")}, false},
+		{"some", fields{a("hdr:.*")}, args{a("F: b")}, false},
+		{"one", fields{a("hdr:.*")}, args{a("F: b", "hdr: yo")}, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			q := MustCompile(tt.fields.expr...)
+			if got := q.ContainedInStrings(tt.args.headerStrings...); got != tt.want {
 				t.Errorf("MatchString() = %v, want %v", got, tt.want)
 			}
 		})
