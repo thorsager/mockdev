@@ -8,6 +8,7 @@ BIN_HTTP_DUMP = $(BIN_PATH)/http-dump
 BIN_FAKEITD = $(BIN_PATH)/mockdevd
 VERSION ?= $(shell git describe --tags --always --dirty 2> /dev/null || echo v0)
 LDFLAGS = -w -extldflags -static
+LOCAL_IMAGE = ghcr.io/thorsager/mockdev:local
 
 .PHONY: all
 all: test snmp-snapshot mockdevd http-dump
@@ -33,6 +34,10 @@ mockdevd:
 	CGO_ENABLED=0 $(GO_BUILD) -ldflags "-X main.Version=$(VERSION) $(LDFLAGS)" \
 		-o $(BIN_FAKEITD) \
 		cmd/mockdevd/mockdevd.go
+
+.PHONY: local-image
+local-image:
+	docker build -t $(LOCAL_IMAGE) .
 
 .PHONY: clean
 clean:

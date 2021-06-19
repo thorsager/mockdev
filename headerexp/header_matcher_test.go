@@ -54,7 +54,7 @@ func TestHeaderExpr_MatchString(t *testing.T) {
 		{"single-number_fail", fields{a("foo:^\\d$")}, args{a("Foo:13")}, false},
 		{"multi", fields{a("f:^\\d$", "d:^\\w+$")}, args{a("F: 3", "d:X")}, true},
 		{"multi_fail", fields{a("f:^\\d$", "d:^\\w+$")}, args{a("F: b", "d:X")}, false},
-		{"some", fields{a("hdr:.*")}, args{a("F: b")}, false},
+		{"some", fields{a("hdr:.*")}, args{a("F: b")}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
