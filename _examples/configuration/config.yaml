@@ -35,7 +35,7 @@ http:
           status-code: 200
           headers:
             - "Content-Type: text/plain"
-          body: Hello World, from mocdevd ( {{.ENV.BASE_URL}} )
+          body: Hello World, from mocdevd ( {{.env.BASE_URL}} )
         # all lines in script will be executed as follows: 'sh -c $line'
         # if any line returns "non zero" the script breaks.
         after-script:

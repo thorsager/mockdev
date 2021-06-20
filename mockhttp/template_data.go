@@ -5,8 +5,8 @@ import (
 	"strings"
 )
 
-const cfg = "CFG"
-const env = "ENV"
+const cfg = "cfg"
+const env = "env"
 const envPrefix = "MOCKDEV_"
 
 type templateData map[string]interface{}
