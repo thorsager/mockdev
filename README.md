@@ -47,3 +47,20 @@ the match-group, and `p` denotes that it is groups from the `path-matcher`, `b` 
 
 The match-groups are also available in `after-script` where they can be accessed as env-vars named in the same manor
 as described above, ex `echo $p1 >> the_file.log`
+
+# Environment variables in conversations
+Any environment variable prefixed with `MOCKDEV_` will be available in conversations, when generating response body.
+ex. `MOCDEV_FOO` will be available using `{{ .ENV.FOO }}`. The current bind address, and the bind port is available as:
+`{{ .CFG.Address }}` and `{{ .CFG.Port }}` (_note that the `Address` will most likely be `""` meaning that mockdev is
+bound to all addresses_)
+
+# Breaking conversations
+It is now possible to make the match, or the failure to match a conversation break the "conversation matching" and
+respond with the conversation breaking the matching. This is done by setting the `break-on` property on a conversation.
+
+Possible values are
+  - `no-match` This will break the conversation-matching if the specific conversation is not matched. Please note that
+    conversation will only break if _configured_ matchers fail.
+  - `match` Will break the matching if the conversation matches.
+
+An example of usage can be found in [config.yaml](_examples/configuration/config.yaml) in the "fake-auth" conversation.
