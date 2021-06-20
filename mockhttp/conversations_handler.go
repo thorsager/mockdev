@@ -27,6 +27,7 @@ type ConversationsHandler struct {
 	SessionLogLocation string
 	SessionLogReceived bool
 	sessionCounter     int
+	BindAddress        string
 }
 
 func (h *ConversationsHandler) sessionContext() context.Context {
@@ -150,6 +151,13 @@ func (h *ConversationsHandler) filterConversations(ctx context.Context, r *http.
 	return candidates, breaker
 }
 
+func (h *ConversationsHandler) createBaseTemplateData() map[string]interface{} {
+	td := make(templateData)
+	td[cfg] = createConfigData(h.BindAddress)
+	td[env] = createEnvData()
+	return td
+}
+
 func (h *ConversationsHandler) serveResponse(w http.ResponseWriter, r *http.Request, conversation Conversation) error {
 	for _, s := range conversation.Response.Headers {
 		addHeaderFromString(w, s)
@@ -169,14 +177,14 @@ func (h *ConversationsHandler) serveResponse(w http.ResponseWriter, r *http.Requ
 		bodyBuffer.Write([]byte(conversation.Response.Body))
 	}
 
-	groups := make(map[string]string)
+	templateVars := h.createBaseTemplateData()
 
 	if conversation.Request.UrlMatcher.Path != "" {
 		m := regexp.MustCompile(conversation.Request.UrlMatcher.Path)
 		matches := m.FindStringSubmatch(r.URL.Path)
 		for i, j := range matches {
 			h.Log.Debugf("p%d=%s", i, j)
-			groups[fmt.Sprintf("p%d", i)] = j
+			templateVars[fmt.Sprintf("p%d", i)] = j
 		}
 	}
 
@@ -184,7 +192,7 @@ func (h *ConversationsHandler) serveResponse(w http.ResponseWriter, r *http.Requ
 		m := regexp.MustCompile(conversation.Request.UrlMatcher.Query)
 		matches := m.FindStringSubmatch(r.URL.RawQuery)
 		for i, j := range matches {
-			groups[fmt.Sprintf("q%d", i)] = j
+			templateVars[fmt.Sprintf("q%d", i)] = j
 		}
 	}
 
@@ -201,7 +209,7 @@ func (h *ConversationsHandler) serveResponse(w http.ResponseWriter, r *http.Requ
 		matches := m.FindSubmatch(bodyBytes)
 		for i, j := range matches {
 			h.Log.Tracef("match-group %d = '%s'", i, string(j))
-			groups[fmt.Sprintf("b%d", i)] = string(j)
+			templateVars[fmt.Sprintf("b%d", i)] = string(j)
 		}
 	}
 
@@ -212,8 +220,9 @@ func (h *ConversationsHandler) serveResponse(w http.ResponseWriter, r *http.Requ
 		return err
 	}
 
+	h.Log.Tracef("templateVars: %+v", templateVars)
 	executedBuffer := &bytes.Buffer{}
-	err = tmpl.Execute(executedBuffer, groups)
+	err = tmpl.Execute(executedBuffer, templateVars)
 	if err != nil {
 		return err
 	}
@@ -225,15 +234,25 @@ func (h *ConversationsHandler) serveResponse(w http.ResponseWriter, r *http.Requ
 
 	h.Log.Infof("Served response from conversation: '%d:%s' (%s)", conversation.Order, conversation.Name, r.URL)
 
-	h.executeScript(conversation.AfterScript, groups)
+	h.executeScript(conversation.AfterScript, templateVars)
 	return nil
 }
 
-func (h *ConversationsHandler) executeScript(script []string, groups map[string]string) {
+func (h *ConversationsHandler) executeScript(script []string, templateVars map[string]interface{}) {
 	if len(script) > 0 {
+		// build env
+		localEnv := make(map[string]string)
+		for k, v := range templateVars {
+			if k != env && k != cfg {
+				if value, ok := v.(string); ok {
+					localEnv[k] = value
+				}
+			}
+		}
 		h.Log.Info("Executing after-script:")
+		h.Log.Tracef("env: %+v", localEnv)
 		for _, line := range script {
-			stdout, stderr, err := scripts.Execute(line, groups)
+			stdout, stderr, err := scripts.Execute(line, localEnv)
 			h.Log.Infof("* %s\n", line)
 			if err != nil {
 				if len(stdout) > 0 {

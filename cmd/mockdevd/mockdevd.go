@@ -101,6 +101,7 @@ func startHttpService(config *mockhttp.Configuration, logger *logrus.Entry) {
 		Log:                logger,
 		SessionLogReceived: config.Logging.LogReceived,
 		SessionLogLocation: config.Logging.Location,
+		BindAddress:        config.BindAddr,
 	})
 	if err != nil {
 		logger.Error(err)

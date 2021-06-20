@@ -35,7 +35,7 @@ http:
           status-code: 200
           headers:
             - "Content-Type: text/plain"
-          body: Hello World, from mocdevd
+          body: Hello World, from mocdevd ( {{.ENV.BASE_URL}} )
         # all lines in script will be executed as follows: 'sh -c $line'
         # if any line returns "non zero" the script breaks.
         after-script:
@@ -54,20 +54,24 @@ http:
           headers:
             - "Content-Type: text/plain"
           body: Hello World, cool, from mocdevd
-      - name: "fake auth"
-        # "match" or "no-match", "" or absent => no breaking
-        break-on: no-match
-        match-order: -1
-        request:
-          # "contains" or "if-present", "" or absent => "if-present"
-          header-match-type: "contains"
-          header-matchers:
-            - "Foo: .*"
-        response:
-          status-code: 401
-          headers:
-            - "Content-Type: text/plain"
-          body: "401 I don't know you... yet."
+#
+# Below is an example of how "header auth could be constructed
+# please note that using 'break-on: no-match' can be a bit tricky if other non-greaking
+# conversations are also configured
+#      - name: "fake auth"
+#        # "match" or "no-match", "" or absent => no breaking
+#        break-on: no-match
+#        match-order: -1
+#        request:
+#          # "contains" or "if-present", "" or absent => "if-present"
+#          header-match-type: "contains"
+#          header-matchers:
+#            - "Foo: .*"
+#        response:
+#          status-code: 401
+#          headers:
+#            - "Content-Type: text/plain"
+#          body: "401 I don't know you... yet."
 
 ssh:
   - name: default
