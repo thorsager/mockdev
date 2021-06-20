@@ -107,41 +107,47 @@ func (h *ConversationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	h.Log.Tracef("Request %s %s", r.Method, r.URL)
 	h.Log.Tracef("%s", bodyBytes)
 
-	candidates := h.filterConversations(ctx, r)
-	if len(candidates) < 1 {
-		http.Error(w, "I'm not a teapot", 418)
-		h.Log.Warnf("No matches after conversation-filter: %s \n%s", r.URL.Path, string(bodyBytes))
-		return
-	}
-	score, _ := getConversationScores(ctx)
-	h.Log.Debugf("scoreKey: %#v", score)
-	theOne, err := score.tieBreak(candidates)
-	if err != nil {
-		http.Error(w, "I'm not a teapot", 418)
-		h.Log.Warnf("No matches after conversation-scoring: %s \n%s", r.URL.Path, string(bodyBytes))
-		return
+	var theOne Conversation
+	candidates, breaker := h.filterConversations(ctx, r)
+	if breaker != nil {
+		theOne = *breaker
+		h.Log.Debugf("Breaking match on: %s", theOne.Name)
+	} else {
+		if len(candidates) < 1 {
+			http.Error(w, "I'm not a teapot", 418)
+			h.Log.Warnf("No matches after conversation-filter: %s \n%s", r.URL.Path, string(bodyBytes))
+			return
+		}
+		score, _ := getConversationScores(ctx)
+		h.Log.Debugf("scoreKey: %#v", score)
+		theOne, err = score.tieBreak(candidates)
+		if err != nil {
+			http.Error(w, "I'm not a teapot", 418)
+			h.Log.Warnf("No matches after conversation-scoring: %s \n%s", r.URL.Path, string(bodyBytes))
+			return
+		}
 	}
 
 	_ = h.logRequestBody(ctx, bytes.NewBuffer(bodyBytes))
 	_ = h.serveResponse(w, r, theOne)
 }
 
-func (h *ConversationsHandler) filterConversations(ctx context.Context, r *http.Request) []Conversation {
-	candidates := h.filterByMethod(ctx, r, h.Conversations)
+func (h *ConversationsHandler) filterConversations(ctx context.Context, r *http.Request) (candidates []Conversation, breaker *Conversation) {
+	candidates, breaker = h.filterByMethod(ctx, r, h.Conversations)
 
-	if len(candidates) > 0 {
-		candidates = h.filterByUrl(ctx, r, candidates)
+	if breaker == nil && len(candidates) > 0 {
+		candidates, breaker = h.filterByUrl(ctx, r, candidates)
 	}
-	if len(candidates) > 0 {
-		candidates = h.filterByHeader(ctx, r, candidates)
+	if breaker == nil && len(candidates) > 0 {
+		candidates, breaker = h.filterByHeader(ctx, r, candidates)
 	}
-	if len(candidates) > 0 {
-		candidates = h.filterByHeader(ctx, r, candidates)
+	if breaker == nil && len(candidates) > 0 {
+		candidates, breaker = h.filterByHeader(ctx, r, candidates)
 	}
-	if len(candidates) > 0 {
-		candidates = h.filterByBody(ctx, r, candidates)
+	if breaker == nil && len(candidates) > 0 {
+		candidates, breaker = h.filterByBody(ctx, r, candidates)
 	}
-	return candidates
+	return candidates, breaker
 }
 
 func (h *ConversationsHandler) serveResponse(w http.ResponseWriter, r *http.Request, conversation Conversation) error {
@@ -255,71 +261,98 @@ func addHeaderFromString(w http.ResponseWriter, s string) {
 	w.Header().Add(t[0], t[1])
 }
 
-func (h *ConversationsHandler) filterByHeader(ctx context.Context, r *http.Request, candidates []Conversation) []Conversation {
+func (h *ConversationsHandler) filterByHeader(ctx context.Context, r *http.Request, candidates []Conversation) (remaining []Conversation, breaker *Conversation) {
 	score, _ := getConversationScores(ctx)
-	var filtered []Conversation
-	for _, c := range candidates {
+	for i, c := range candidates {
 		if len(c.Request.HeaderMatchers) == 0 {
-			filtered = append(filtered, c)
+			remaining = append(remaining, c)
 			continue
 		}
 		headers := headerexp.MustCompile(c.Request.HeaderMatchers...)
-		if headers.MatchHeader(r.Header) {
-			filtered = append(filtered, c)
-			score.inc(c.Name)
+		var doesMatch bool
+		if c.Request.GetHeaderMatchType() == Contains {
+			doesMatch = headers.ContainedInHeader(r.Header)
+		} else {
+			doesMatch = headers.MatchHeader(r.Header)
+		}
+		if doesMatch {
+			if c.BreakOnMatch() {
+				breaker = &candidates[i]
+				break
+			} else if !c.IsBreaking() {
+				remaining = append(remaining, c)
+				score.inc(c.Name)
+			}
+		} else if c.BreakOnNoMatch() {
+			breaker = &candidates[i]
+			break
 		}
 	}
-	return filtered
+	return remaining, breaker
 }
 
-func (h *ConversationsHandler) filterByMethod(ctx context.Context, r *http.Request, candidates []Conversation) []Conversation {
+func (h *ConversationsHandler) filterByMethod(ctx context.Context, r *http.Request, candidates []Conversation) (remaining []Conversation, breaker *Conversation) {
 	score, _ := getConversationScores(ctx)
-	var filtered []Conversation
-	for _, c := range candidates {
+	for i, c := range candidates {
 		if c.Request.MethodMatcher == "" {
-			filtered = append(filtered, c)
+			remaining = append(remaining, c)
 			continue
 		}
 		method := regexp.MustCompile(c.Request.MethodMatcher)
 		if method.MatchString(r.Method) {
-			filtered = append(filtered, c)
-			score.inc(c.Name)
+			if c.BreakOnMatch() {
+				breaker = &candidates[i]
+				break
+			} else if !c.IsBreaking() {
+				remaining = append(remaining, c)
+				score.inc(c.Name)
+			}
+		} else if c.BreakOnNoMatch() {
+			breaker = &candidates[i]
+			break
 		}
 	}
-	return filtered
+	return remaining, breaker
 }
 
-func (h *ConversationsHandler) filterByBody(ctx context.Context, r *http.Request, candidates []Conversation) []Conversation {
+func (h *ConversationsHandler) filterByBody(ctx context.Context, r *http.Request, candidates []Conversation) (remaining []Conversation, breaker *Conversation) {
 	score, _ := getConversationScores(ctx)
-	var filtered []Conversation
 
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		return filtered
+		h.Log.Errorf("%v", err)
+		return remaining, breaker
 	}
 	_ = r.Body.Close() //  must close
 	r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
 
-	for _, c := range candidates {
+	for i, c := range candidates {
 		if c.Request.BodyMatcher == "" {
-			filtered = append(filtered, c)
+			remaining = append(remaining, c)
 			continue
 		}
 		method := regexp.MustCompile(c.Request.BodyMatcher)
 		if method.Match(body) {
-			filtered = append(filtered, c)
-			score.inc(c.Name)
+			if c.BreakOnMatch() {
+				breaker = &candidates[i]
+				break
+			} else if !c.IsBreaking() {
+				remaining = append(remaining, c)
+				score.inc(c.Name)
+			}
+		} else if c.BreakOnNoMatch() {
+			breaker = &candidates[i]
+			break
 		}
 	}
-	return filtered
+	return remaining, breaker
 }
 
-func (h *ConversationsHandler) filterByUrl(ctx context.Context, r *http.Request, candidates []Conversation) []Conversation {
+func (h *ConversationsHandler) filterByUrl(ctx context.Context, r *http.Request, candidates []Conversation) (remaining []Conversation, breaker *Conversation) {
 	score, _ := getConversationScores(ctx)
-	var filtered []Conversation
-	for _, c := range candidates {
+	for i, c := range candidates {
 		if c.Request.UrlMatcher == (UrlMatcher{}) {
-			filtered = append(filtered, c)
+			remaining = append(remaining, c)
 			continue
 		}
 
@@ -345,8 +378,16 @@ func (h *ConversationsHandler) filterByUrl(ctx context.Context, r *http.Request,
 		}
 
 		if pathMatch && queryMatch {
-			filtered = append(filtered, c)
+			if c.BreakOnMatch() {
+				breaker = &candidates[i]
+				break
+			} else if !c.IsBreaking() {
+				remaining = append(remaining, c)
+			}
+		} else if c.BreakOnNoMatch() {
+			breaker = &candidates[i]
+			break
 		}
 	}
-	return filtered
+	return remaining, breaker
 }

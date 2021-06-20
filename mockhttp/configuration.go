@@ -6,7 +6,13 @@ import (
 	"gopkg.in/yaml.v2"
 	"os"
 	"path/filepath"
+	"strings"
 )
+
+const Match = "match"
+const NoMatch = "no-match"
+const IfPresent = "if-present"
+const Contains = "contains"
 
 type Configuration struct {
 	Name              string   `yaml:"name"`
@@ -24,16 +30,37 @@ type SessionLogging struct {
 type Conversation struct {
 	Name        string   `yaml:"name"`
 	Order       int      `yaml:"match-order"`
+	BreakOn     string   `yaml:"break-on"` // possible: "", "match", "no-match"
 	Request     Request  `yaml:"request"`
 	Response    Response `yaml:"response"`
 	AfterScript []string `yaml:"after-script"`
 }
 
+func (c Conversation) IsBreaking() bool {
+	return c.BreakOn != ""
+}
+func (c Conversation) BreakOnMatch() bool {
+	return strings.ToLower(c.BreakOn) == Match
+}
+func (c Conversation) BreakOnNoMatch() bool {
+	return strings.ToLower(c.BreakOn) == NoMatch
+}
+
 type Request struct {
-	UrlMatcher     UrlMatcher `yaml:"url-matcher"`
-	MethodMatcher  string     `yaml:"method-matcher"`
-	HeaderMatchers []string   `yaml:"header-matchers,omitempty"`
-	BodyMatcher    string     `yaml:"body-matcher,omitempty"`
+	UrlMatcher      UrlMatcher `yaml:"url-matcher"`
+	MethodMatcher   string     `yaml:"method-matcher"`
+	HeaderMatchType string     `yaml:"header-match-type"` // possible "", "contains", "if-present"(default)
+	HeaderMatchers  []string   `yaml:"header-matchers,omitempty"`
+	BodyMatcher     string     `yaml:"body-matcher,omitempty"`
+}
+
+func (r Request) GetHeaderMatchType() string {
+	switch strings.ToLower(r.HeaderMatchType) {
+	case Contains:
+		return Contains
+	default:
+		return IfPresent
+	}
 }
 
 type Response struct {

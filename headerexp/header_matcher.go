@@ -12,18 +12,24 @@ type HeaderExpr struct {
 	*keyvalueexp.KeyValueExpr
 }
 
-// MatchString, will match against the query part of an URL, return true
+// MatchString will match against the query part of an URL, return true
 // if all parameters are matched, if not false is returned
 func (q *HeaderExpr) MatchString(headerStrings ...string) bool {
-	headers := http.Header{}
-	for _, s := range headerStrings {
-		tuple := strings.SplitN(s, ":", 2)
-		if len(tuple) != 2 {
-			return false
-		}
-		headers.Add(strings.TrimSpace(tuple[0]), strings.TrimSpace(tuple[1]))
+	headers, err := stringsToHeaders(headerStrings...)
+	if err != nil {
+		return false
 	}
 	return q.MatchHeader(headers)
+}
+
+// MatchStringExact will match against, string representation of the http.Headers
+// matching is done in the same way as the MatchHeaderExact method
+func (q *HeaderExpr) ContainedInStrings(headerStrings ...string) bool {
+	headers, err := stringsToHeaders(headerStrings...)
+	if err != nil {
+		return false
+	}
+	return q.ContainedInHeader(headers)
 }
 
 // MatchHeader will match the http.Header structure against the HeaderExpr,
@@ -38,7 +44,18 @@ func (q *HeaderExpr) MatchHeader(h http.Header) bool {
 	return q.MatchIfPresentMap(m)
 }
 
-// Compile, will create a HeaderExpr from a string in URL query format, but with
+// MatchHeaderExact will match the http.Header structure against the HeaderExpr
+// and return true if all readers in the HeaderExpr are found and are matching
+// the expr.
+func (q *HeaderExpr) ContainedInHeader(h http.Header) bool {
+	m := make(map[string]string)
+	for k, v := range h {
+		m[k] = v[0]
+	}
+	return q.ContainedInMap(m)
+}
+
+// Compile will create a HeaderExpr from a string in URL query format, but with
 // the twist that all parameter will be treated as a RegularExpression.
 // ex.
 // m,err := Compile(["Content-Type: ^application/.*$","Accept: ^text/.*$"])
@@ -98,4 +115,16 @@ func stringMapJoin(m1, m2 map[string]string, overwrite bool) (map[string]string,
 		joined[k] = v
 	}
 	return joined, nil
+}
+
+func stringsToHeaders(headerStrings ...string) (http.Header, error) {
+	headers := http.Header{}
+	for _, s := range headerStrings {
+		tuple := strings.SplitN(s, ":", 2)
+		if len(tuple) != 2 {
+			return headers, fmt.Errorf("infalid format: %s", s)
+		}
+		headers.Add(strings.TrimSpace(tuple[0]), strings.TrimSpace(tuple[1]))
+	}
+	return headers, nil
 }
