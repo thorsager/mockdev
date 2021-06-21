@@ -3,6 +3,7 @@ package mockhttp
 import (
 	"context"
 	"fmt"
+	"github.com/thorsager/mockdev/logging"
 	"sort"
 )
 
@@ -12,11 +13,26 @@ type conversationScores struct {
 type scoreMap map[string]int
 type sessionIdKey struct{}
 type scoreKey struct{}
+type logKey struct{}
 
 func contextWithWithSessionId(id int) context.Context {
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, scoreKey{}, &conversationScores{values: make(scoreMap)})
 	return context.WithValue(ctx, sessionIdKey{}, id)
+}
+func setContextLogger(ctx context.Context, logger logging.Logger) context.Context {
+	return context.WithValue(ctx, logKey{}, logger)
+}
+func getContextLogger(ctx context.Context) (logging.Logger, error) {
+	if v := ctx.Value(logKey{}); v != nil {
+		if t, ok := v.(logging.Logger); ok {
+			return t, nil
+		} else {
+			return nil, fmt.Errorf("invalid value type for %T", logKey{})
+		}
+	} else {
+		return nil, fmt.Errorf("no value found for %T", logKey{})
+	}
 }
 
 func getSessionId(ctx context.Context) (int, error) {
