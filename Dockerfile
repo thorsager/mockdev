@@ -18,7 +18,7 @@ VOLUME /config
 COPY --from=build /build/bin/mockdevd /
 COPY --from=build /build/bin/snmp-snapshot /
 COPY --from=build /build/bin/http-dump /
-COPY --from-build /usr/local/go/lib/time/zoneinfo.zip /
+COPY --from=build /usr/local/go/lib/time/zoneinfo.zip /
 COPY resources/docker_default_config.yaml /config/mockdev.yaml
 
 ENV ZONEINFO=/zoneinfo.zip
