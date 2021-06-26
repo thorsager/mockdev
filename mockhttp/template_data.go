@@ -8,6 +8,8 @@ import (
 const cfg = "cfg"
 const env = "env"
 const envPrefix = "MOCKDEV_"
+const currentTime = "currentTime"
+const currentTimeGMT = "currentTime_GMT"
 
 type templateData map[string]interface{}
 type envData map[string]string

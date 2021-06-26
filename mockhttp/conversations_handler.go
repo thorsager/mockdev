@@ -164,13 +164,15 @@ func (h *ConversationsHandler) createBaseTemplateData() map[string]interface{} {
 	td := make(templateData)
 	td[cfg] = createConfigData(h.BindAddress)
 	td[env] = createEnvData()
+
+	now := time.Now()
+	loc, _ := time.LoadLocation("GMT")
+	td[currentTime] = now
+	td[currentTimeGMT] = now.In(loc)
 	return td
 }
 
 func (h *ConversationsHandler) serveResponse(w http.ResponseWriter, r *http.Request, conversation Conversation) error {
-	for _, s := range conversation.Response.Headers {
-		addHeaderFromString(w, s)
-	}
 	bodyBuffer := &bytes.Buffer{}
 	if conversation.Response.BodyFile != "" {
 		f, err := os.Open(conversation.Response.BodyFile)
@@ -223,14 +225,26 @@ func (h *ConversationsHandler) serveResponse(w http.ResponseWriter, r *http.Requ
 	}
 
 	// TODO: Figure out how match-groups could be implemented on Header Matchers.
+	h.Log.Tracef("templateVars: %+v", templateVars)
 
+	// parse headers as templates
+	executedBuffer := &bytes.Buffer{}
+	for _, s := range conversation.Response.Headers {
+		tmpl, err := template.New("body").Parse(s)
+		if err != nil {
+			return err
+		}
+		err = tmpl.Execute(executedBuffer, templateVars)
+		addHeaderFromString(w, executedBuffer.String())
+		executedBuffer.Reset()
+	}
+
+	// parse body as template
 	tmpl, err := template.New("body").Parse(bodyBuffer.String())
 	if err != nil {
 		return err
 	}
 
-	h.Log.Tracef("templateVars: %+v", templateVars)
-	executedBuffer := &bytes.Buffer{}
 	err = tmpl.Execute(executedBuffer, templateVars)
 	if err != nil {
 		return err

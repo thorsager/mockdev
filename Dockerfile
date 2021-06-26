@@ -1,4 +1,4 @@
-FROM golang:1.15-alpine3.12 AS build
+FROM golang:1.16-alpine3.14 AS build
 RUN apk add --update --no-cache make git
 RUN mkdir /build
 WORKDIR /build
@@ -10,7 +10,7 @@ ADD . /build
 RUN make
 
 
-FROM alpine:3.12
+FROM alpine:3.14
 LABEL org.opencontainers.image.source=https://github.com/thorsager/mockdev
 WORKDIR /
 VOLUME /config
@@ -18,8 +18,10 @@ VOLUME /config
 COPY --from=build /build/bin/mockdevd /
 COPY --from=build /build/bin/snmp-snapshot /
 COPY --from=build /build/bin/http-dump /
+COPY --from=build /usr/local/go/lib/time/zoneinfo.zip /
 COPY resources/docker_default_config.yaml /config/mockdev.yaml
 
+ENV ZONEINFO=/zoneinfo.zip
 ENV PATH=/
 EXPOSE 1161/udp
 EXPOSE 8080/tcp
