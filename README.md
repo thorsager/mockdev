@@ -40,10 +40,10 @@ docker run -v `pwd`:/tmp $DOCKER_IMAGE snmp-snapshot -v -n -f -o /tmp/snapshot.t
 ```
 
 # Match-groups in HTTP conversations
-Match-groups found to the `path-matcher` or `body-matcher` are available in the `response.body` using go-tempting.
-Groups from the `path-matcher` are available as `{{ .p<number> }} {{ .b<number> }}` where `<number>` is the number of 
-the match-group, and `p` denotes that it is groups from the `path-matcher`, `b` denotes that it is groups from the 
-`body-matcher`. Number `0` will contain the entire match.
+Match-groups found to the `path-matcher` or `body-matcher` are available in the `response.body` and `response.headeres[]` 
+using go-tempting. Groups from the `path-matcher` are available as `{{ .p<number> }} {{ .b<number> }}` where `<number>` 
+is the number of the match-group, and `p` denotes that it is groups from the `path-matcher`, `b` denotes that it is 
+groups from the `body-matcher`. Number `0` will contain the entire match.
 
 The match-groups are also available in `after-script` where they can be accessed as env-vars named in the same manor
 as described above, ex `echo $p1 >> the_file.log`
@@ -53,6 +53,12 @@ Any environment variable prefixed with `MOCKDEV_` will be available in conversat
 ex. `MOCDEV_FOO` will be available using `{{ .ENV.FOO }}`. The current bind address, and the bind port is available as:
 `{{ .CFG.Address }}` and `{{ .CFG.Port }}` (_note that the `Address` will most likely be `""` meaning that mockdev is
 bound to all addresses_)
+
+# Current Time in conversations
+The current time in "local" and in "GMT" is available in the context of templates now and can be accessed using 
+`{{ .currentTime }}` and `{{ .currentTime_GMT }}`. Please note that date formatting is available in template context,
+formatting is done using [time.Format](https://golang.org/pkg/time/#Time.Format). 
+Ex. `{{ .currentTime.Format "Mon, 02 Jan 2006 15:04:05 MST" }`
 
 # Breaking conversations
 It is now possible to make the match, or the failure to match a conversation break the "conversation matching" and

@@ -53,10 +53,12 @@ http:
           status-code: 200
           headers:
             - "Content-Type: text/plain"
+            - 'X-Now-GMT: {{ .currentTime_GMT.Format "Mon, 02 Jan 2006 15:04:05 MST" }}'
+            - 'X-Now: {{ .currentTime.Format "Mon, 02 Jan 2006 15:04:05 MST" }}'
           body: Hello World, cool, from mocdevd
 #
 # Below is an example of how "header auth could be constructed
-# please note that using 'break-on: no-match' can be a bit tricky if other non-greaking
+# please note that using 'break-on: no-match' can be a bit tricky if other non-breaking
 # conversations are also configured
       - name: "fake auth"
         # "match" or "no-match", "" or absent => no breaking
@@ -66,7 +68,7 @@ http:
           # "contains" or "if-present", "" or absent => "if-present"
           header-match-type: "contains"
           header-matchers:
-            - "Foo: .*"
+            - "Authorization: Basic .*"
         response:
           status-code: 401
           headers:
