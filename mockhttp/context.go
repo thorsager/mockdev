@@ -82,18 +82,26 @@ func (s *conversationScores) tieBreak(candidates []Conversation) (Conversation, 
 	}
 	var ss []kv
 	for k, v := range s.values {
-		ss = append(ss, kv{k, v})
+		if c, found := lookupByName(candidates, k); found && !c.IsBreaking() {
+			ss = append(ss, kv{k, v - (c.Order * 100)})
+		}
 	}
 	sort.Slice(ss, func(i, j int) bool {
 		return ss[i].v > ss[j].v
 	})
 
-	for _, s := range ss {
-		for _, c := range candidates {
-			if s.k == c.Name {
-				return c, nil
-			}
+	if theOne, found := lookupByName(candidates, ss[0].k); found {
+		return theOne, nil
+	} else {
+		return Conversation{}, fmt.Errorf("that is wierd, no candidates found in score")
+	}
+}
+
+func lookupByName(haystack []Conversation, needle string) (Conversation, bool) {
+	for _, c := range haystack {
+		if c.Name == needle {
+			return c, true
 		}
 	}
-	return Conversation{}, fmt.Errorf("that is wierd, no candidates found in score")
+	return Conversation{}, false
 }
