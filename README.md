@@ -50,8 +50,8 @@ as described above, ex `echo $p1 >> the_file.log`
 
 # Environment variables in conversations
 Any environment variable prefixed with `MOCKDEV_` will be available in conversations, when generating response body.
-ex. `MOCDEV_FOO` will be available using `{{ .ENV.FOO }}`. The current bind address, and the bind port is available as:
-`{{ .CFG.Address }}` and `{{ .CFG.Port }}` (_note that the `Address` will most likely be `""` meaning that mockdev is
+ex. `MOCDEV_FOO` will be available using `{{ .env.FOO }}`. The current bind address, and the bind port is available as:
+`{{ .cfg.Address }}` and `{{ .cfg.Port }}` (_note that the `Address` will most likely be `""` meaning that mockdev is
 bound to all addresses_)
 
 # Current Time in conversations
