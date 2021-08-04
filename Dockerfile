@@ -1,4 +1,4 @@
-FROM golang:1.16-alpine3.14 AS build
+FROM golang:1-alpine AS build
 RUN apk add --update --no-cache make git
 RUN mkdir /build
 WORKDIR /build
@@ -10,7 +10,7 @@ ADD . /build
 RUN make
 
 
-FROM alpine:3.14
+FROM alpine:3
 LABEL org.opencontainers.image.source=https://github.com/thorsager/mockdev
 WORKDIR /
 VOLUME /config
