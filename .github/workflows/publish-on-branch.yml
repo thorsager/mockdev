@@ -24,6 +24,15 @@ jobs:
         run: |
           echo ::set-output name=tags::${IMAGE_NAME}:${GITHUB_REF##*/}
 
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          # Key is named differently to avoid collision
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@master
         with:
@@ -37,10 +46,6 @@ jobs:
         run: |
           echo ${PAT} | docker login ghcr.io -u thorsager --password-stdin
 
-      - name: Build image
-        run: |
-          docker build . --tag "${IMAGE_NAME}:${GITHUB_REF##*/}"
-
       - name: Build
         uses: docker/build-push-action@v2
         with:
@@ -50,4 +55,14 @@ jobs:
           platforms: linux/amd64,linux/386,linux/arm64/v8,linux/arm/v6,linux/arm/v7
           push: true
           tags: ${{ steps.prep.outputs.tags }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          # Note the mode=max here
+          # More: https://github.com/moby/buildkit#--export-cache-options
+          # And: https://github.com/docker/buildx#--cache-tonametypetypekeyvalue
+          cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-new
+
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
