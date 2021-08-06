@@ -22,7 +22,7 @@ jobs:
       - name: Prepare
         id: prep
         run: |
-          echo ::set-output name=tags::${GITHUB_REF/refs\/tags\//}
+          echo ::set-output name=tags::${IMAGE_NAME}:${GITHUB_REF/refs\/tags\//}
 
       - name: Cache Docker layers
         uses: actions/cache@v2
