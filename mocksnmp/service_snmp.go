@@ -1,6 +1,5 @@
 package mocksnmp
 
-//import "github.com/slayercat/gosnmp"
 import (
 	"fmt"
 	"github.com/slayercat/GoSNMPServer"
