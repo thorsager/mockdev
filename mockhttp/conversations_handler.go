@@ -8,6 +8,7 @@ import (
 	"github.com/thorsager/mockdev/scripts"
 	"io"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"os"
 	"path"
@@ -129,8 +130,32 @@ func (h *ConversationsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
+	if err := handleDelay(theOne.Response.Delay); err != nil {
+		h.Log.Errorf("While handling response-delay: %v", err)
+	}
+
 	_ = h.logRequestBody(ctx, bytes.NewBuffer(bodyBytes))
 	_ = h.serveResponse(w, r, theOne)
+}
+
+func handleDelay(delay ResponseDelay) error {
+	if delay.Max == 0 && delay.Min == 0 || os.Getenv("IGNORE_DELAY") != "" {
+		return nil // no delay
+	}
+	interval := 0
+	delta := delay.Max - delay.Min
+	if delta < 0 {
+		return fmt.Errorf("invalid sleep interval min=%d, max=%d", delay.Min, delay.Max)
+	}
+	if delta == 0 {
+		interval = delay.Min
+	} else {
+		interval = rand.Intn(delta)
+	}
+	if interval > 0 {
+		time.Sleep(time.Duration(interval) * time.Millisecond)
+	}
+	return nil
 }
 
 func (h *ConversationsHandler) filterConversations(ctx context.Context, r *http.Request) (candidates []Conversation, breaker *Conversation) {
