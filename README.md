@@ -20,11 +20,11 @@ at [config.yaml](_examples/configuration/config.yaml). It is quite straight forw
 # Run under docker
 
 ```
-docker run --rm -p 161:1161/udp $DOCKER_IMAGE
+docker run --rm -p 161:1161/udp docker pull ghcr.io/thorsager/mockdev
 ```
 
 ```
-docker run --rm -p 161:1161/udp -v `pwd`/_testdata/snmp-config.yaml:/config/mockdev.yaml $DOCKER_IMAGE
+docker run --rm -p 161:1161/udp -v `pwd`/_testdata/snmp-config.yaml:/config/mockdev.yaml ghcr.io/thorsager/mockdev
 ```
 
 ## Verify running
@@ -36,7 +36,7 @@ snmpwalk -v 2c -c public localhost
 # Creating snapshots
 
 ```
-docker run -v `pwd`:/tmp $DOCKER_IMAGE snmp-snapshot -v -n -f -o /tmp/snapshot.txt -c $COMMUNITY $HOST 
+docker run -v `pwd`:/tmp ghcr.io/thorsager/mockdev snmp-snapshot -v -n -f -o /tmp/snapshot.txt -c $COMMUNITY $HOST 
 ```
 
 # Match-groups in HTTP conversations
