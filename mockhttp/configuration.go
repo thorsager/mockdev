@@ -64,10 +64,16 @@ func (r Request) GetHeaderMatchType() string {
 }
 
 type Response struct {
-	StatusCode int      `yaml:"status-code"`
-	Headers    []string `yaml:"headers"`
-	Body       string   `yaml:"body"`
-	BodyFile   string   `yaml:"body-file,omitempty"`
+	StatusCode int           `yaml:"status-code"`
+	Headers    []string      `yaml:"headers"`
+	Body       string        `yaml:"body"`
+	BodyFile   string        `yaml:"body-file,omitempty"`
+	Delay      ResponseDelay `yaml:"delay,omitempty"`
+}
+
+type ResponseDelay struct {
+	Max int `yaml:"max,omitempty"`
+	Min int `yaml:"min,omitempty"`
 }
 
 type UrlMatcher struct {

@@ -50,6 +50,9 @@ http:
           header-matchers:
           body-matcher: .*
         response:
+          delay: # if env var IGNORE_DELAY is set delay config is ignored.
+            min: 2000
+            max: 7000
           status-code: 200
           headers:
             - "Content-Type: text/plain"
@@ -60,20 +63,20 @@ http:
 # Below is an example of how "header auth could be constructed
 # please note that using 'break-on: no-match' can be a bit tricky if other non-breaking
 # conversations are also configured
-      - name: "fake auth"
-        # "match" or "no-match", "" or absent => no breaking
-        break-on: no-match
-        match-order: -1
-        request:
-          # "contains" or "if-present", "" or absent => "if-present"
-          header-match-type: "contains"
-          header-matchers:
-            - "Authorization: Basic .*"
-        response:
-          status-code: 401
-          headers:
-            - "Content-Type: text/plain"
-          body: "401 I don't know you... yet."
+#      - name: "fake auth"
+#        # "match" or "no-match", "" or absent => no breaking
+#        break-on: no-match
+#        match-order: -1
+#        request:
+#          # "contains" or "if-present", "" or absent => "if-present"
+#          header-match-type: "contains"
+#          header-matchers:
+#            - "Authorization: Basic .*"
+#        response:
+#          status-code: 401
+#          headers:
+#            - "Content-Type: text/plain"
+#          body: "401 I don't know you... yet."
 
 ssh:
   - name: default
