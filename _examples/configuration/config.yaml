@@ -23,6 +23,7 @@ http:
       - http_conversations/file.yaml
       - http_conversations/advanced.yaml
       - http_conversations/query-contains.yaml
+      - http_conversations/script.yaml
     conversations:
       - name: "hello world"
         request:

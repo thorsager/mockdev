@@ -45,14 +45,18 @@ using go-tempting. Groups from the `path-matcher` are available as `{{ .p<number
 is the number of the match-group, and `p` denotes that it is groups from the `path-matcher`, `b` denotes that it is 
 groups from the `body-matcher`. Number `0` will contain the entire match.
 
-The match-groups are also available in `after-script` where they can be accessed as env-vars named in the same manor
-as described above, ex `echo $p1 >> the_file.log`
+The match-groups are also available in `response.script` and `after-script` where they can be accessed as env-vars named
+in the same manor as described above, ex `echo $p1 >> the_file.log`
 
 # Environment variables in conversations
 Any environment variable prefixed with `MOCKDEV_` will be available in conversations, when generating response body.
 ex. `MOCDEV_FOO` will be available using `{{ .env.FOO }}`. The current bind address, and the bind port is available as:
 `{{ .cfg.Address }}` and `{{ .cfg.Port }}` (_note that the `Address` will most likely be `""` meaning that mockdev is
 bound to all addresses_)
+
+# Scripted responses
+It is possible to generate the entire http-conversation response using the `response.script` function. This expects that
+a _complete_ raw HTTP response message is written to `STDOUT`. For further details look at [script.yaml](_examples/configuration/http_conversations/script.yaml)
 
 # Current Time in conversations
 The current time in "local" and in "GMT" is available in the context of templates now and can be accessed using 

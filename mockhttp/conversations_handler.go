@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/thorsager/mockdev/logging"
+	"github.com/thorsager/mockdev/rawhttp"
 	"github.com/thorsager/mockdev/scripts"
 	"io"
 	"io/ioutil"
@@ -198,20 +199,6 @@ func (h *ConversationsHandler) createBaseTemplateData() map[string]interface{} {
 }
 
 func (h *ConversationsHandler) serveResponse(w http.ResponseWriter, r *http.Request, conversation Conversation) error {
-	bodyBuffer := &bytes.Buffer{}
-	if conversation.Response.BodyFile != "" {
-		f, err := os.Open(conversation.Response.BodyFile)
-		if err != nil {
-			return err
-		}
-		defer func() { _ = f.Close() }()
-		_, err = io.Copy(bodyBuffer, f)
-		if err != nil {
-			return err
-		}
-	} else {
-		bodyBuffer.Write([]byte(conversation.Response.Body))
-	}
 
 	templateVars := h.createBaseTemplateData()
 
@@ -248,46 +235,71 @@ func (h *ConversationsHandler) serveResponse(w http.ResponseWriter, r *http.Requ
 			templateVars[fmt.Sprintf("b%d", i)] = string(j)
 		}
 	}
-
 	// TODO: Figure out how match-groups could be implemented on Header Matchers.
 	h.Log.Tracef("templateVars: %+v", templateVars)
 
-	// parse headers as templates
-	executedBuffer := &bytes.Buffer{}
-	for _, s := range conversation.Response.Headers {
-		tmpl, err := template.New("body").Parse(s)
+	if len(conversation.Response.Script) > 0 {
+		resp := h.executeScript(conversation.Response.Script, templateVars)
+		h.Log.Tracef("Scripted response:\n--\n%s\n--\n", resp)
+		_, err := rawhttp.NewWriter(w).Write(resp)
 		if err != nil {
 			return err
 		}
+	} else {
+		bodyBuffer := &bytes.Buffer{}
+		if conversation.Response.BodyFile != "" {
+			f, err := os.Open(conversation.Response.BodyFile)
+			if err != nil {
+				return err
+			}
+			defer func() { _ = f.Close() }()
+			_, err = io.Copy(bodyBuffer, f)
+			if err != nil {
+				return err
+			}
+		} else {
+			bodyBuffer.Write([]byte(conversation.Response.Body))
+		}
+
+		// parse headers as templates
+		executedBuffer := &bytes.Buffer{}
+		for _, s := range conversation.Response.Headers {
+			tmpl, err := template.New("body").Parse(s)
+			if err != nil {
+				return err
+			}
+			err = tmpl.Execute(executedBuffer, templateVars)
+			addHeaderFromString(w, executedBuffer.String())
+			executedBuffer.Reset()
+		}
+
+		// parse body as template
+		tmpl, err := template.New("body").Parse(bodyBuffer.String())
+		if err != nil {
+			return err
+		}
+
 		err = tmpl.Execute(executedBuffer, templateVars)
-		addHeaderFromString(w, executedBuffer.String())
-		executedBuffer.Reset()
-	}
+		if err != nil {
+			return err
+		}
 
-	// parse body as template
-	tmpl, err := template.New("body").Parse(bodyBuffer.String())
-	if err != nil {
-		return err
+		w.Header().Add("X-Powered-By", "mockdev")
+		w.Header().Add("size", fmt.Sprintf("%d", executedBuffer.Len()))
+		w.WriteHeader(conversation.Response.StatusCode)
+		_, _ = w.Write(executedBuffer.Bytes())
 	}
-
-	err = tmpl.Execute(executedBuffer, templateVars)
-	if err != nil {
-		return err
-	}
-
-	w.Header().Add("X-Powered-By", "mockdev")
-	w.Header().Add("size", fmt.Sprintf("%d", executedBuffer.Len()))
-	w.WriteHeader(conversation.Response.StatusCode)
-	_, _ = w.Write(executedBuffer.Bytes())
 
 	h.Log.Infof("Served response from conversation: '%d:%s' (%s)", conversation.Order, conversation.Name, r.URL)
 
-	h.executeScript(conversation.AfterScript, templateVars)
+	_ = h.executeScript(conversation.AfterScript, templateVars)
 	return nil
 }
 
-func (h *ConversationsHandler) executeScript(script []string, templateVars map[string]interface{}) {
+func (h *ConversationsHandler) executeScript(script []string, templateVars map[string]interface{}) []byte {
+	out := bytes.Buffer{}
 	if len(script) > 0 {
+		h.Log.Tracef("Script:\n%s\n", strings.Join(script, "\n"))
 		// build env
 		localEnv := make(map[string]string)
 		for k, v := range templateVars {
@@ -297,14 +309,14 @@ func (h *ConversationsHandler) executeScript(script []string, templateVars map[s
 				}
 			}
 		}
-		h.Log.Info("Executing after-script:")
 		h.Log.Tracef("env: %+v", localEnv)
 		for _, line := range script {
 			stdout, stderr, err := scripts.Execute(line, localEnv)
-			h.Log.Infof("* %s\n", line)
+			h.Log.Tracef(">> %s\n", line)
 			if err != nil {
 				if len(stdout) > 0 {
-					h.Log.Infof("%s", stdout)
+					out.Write(stdout)
+					h.Log.Tracef("<< %s", stdout)
 				}
 				if len(stderr) > 0 {
 					h.Log.Warnf("%s", stderr)
@@ -313,7 +325,8 @@ func (h *ConversationsHandler) executeScript(script []string, templateVars map[s
 				break
 			} else {
 				if len(stdout) > 0 {
-					h.Log.Infof("%s", stdout)
+					out.Write(stdout)
+					h.Log.Tracef("<< %s", stdout)
 				}
 				if len(stderr) > 0 {
 					h.Log.Warnf("%s", stderr)
@@ -321,6 +334,7 @@ func (h *ConversationsHandler) executeScript(script []string, templateVars map[s
 			}
 		}
 	}
+	return out.Bytes()
 }
 
 func addHeaderFromString(w http.ResponseWriter, s string) {

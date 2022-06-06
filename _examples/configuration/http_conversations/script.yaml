@@ -1,0 +1,17 @@
+- name: "Scripted response"
+  request:
+    url-matcher:
+      path: "/script/?(.*)"
+    method-matcher: GET
+  response:
+    # Script, is script-lines, that will be executed "server-side" and the output, should be a _raw_
+    # http response, and is returned as such. (additional headers will be added if missing such as
+    # 'Date' and 'Content-Length'.
+    # Match-groups are available as env-vars named ex. $b1 and $p1
+    script:
+      - 'echo HTTP/1.1 200 OK'
+      - 'echo Content-Type: text/plain'
+      - 'echo X-Custom-Header: great-value'
+      - 'echo'
+      - 'echo Hello ${p1:-joe}, you like ${EDITOR:-vi}'
+
