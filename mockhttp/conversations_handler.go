@@ -240,7 +240,7 @@ func (h *ConversationsHandler) serveResponse(w http.ResponseWriter, r *http.Requ
 
 	if len(conversation.Response.Script) > 0 {
 		resp := h.executeScript(conversation.Response.Script, templateVars)
-		h.Log.Tracef("Scripted response:\n%s\n", resp)
+		h.Log.Tracef("Scripted response:\n--\n%s\n--\n", resp)
 		_, err := rawhttp.NewWriter(w).Write(resp)
 		if err != nil {
 			return err
@@ -309,15 +309,14 @@ func (h *ConversationsHandler) executeScript(script []string, templateVars map[s
 				}
 			}
 		}
-		h.Log.Info("Executing script:")
 		h.Log.Tracef("env: %+v", localEnv)
 		for _, line := range script {
 			stdout, stderr, err := scripts.Execute(line, localEnv)
-			h.Log.Infof("* %s\n", line)
+			h.Log.Tracef(">> %s\n", line)
 			if err != nil {
 				if len(stdout) > 0 {
 					out.Write(stdout)
-					h.Log.Infof("%s", stdout)
+					h.Log.Tracef("<< %s", stdout)
 				}
 				if len(stderr) > 0 {
 					h.Log.Warnf("%s", stderr)
@@ -327,7 +326,7 @@ func (h *ConversationsHandler) executeScript(script []string, templateVars map[s
 			} else {
 				if len(stdout) > 0 {
 					out.Write(stdout)
-					h.Log.Infof("%s", stdout)
+					h.Log.Tracef("<< %s", stdout)
 				}
 				if len(stderr) > 0 {
 					h.Log.Warnf("%s", stderr)
