@@ -69,6 +69,7 @@ type Response struct {
 	Body       string        `yaml:"body"`
 	BodyFile   string        `yaml:"body-file,omitempty"`
 	Delay      ResponseDelay `yaml:"delay,omitempty"`
+	Script     []string      `yaml:"script,omitempty"`
 }
 
 type ResponseDelay struct {
