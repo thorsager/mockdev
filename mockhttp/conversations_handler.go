@@ -190,6 +190,11 @@ func (h *ConversationsHandler) createBaseTemplateData() map[string]interface{} {
 	td := make(templateData)
 	td[cfg] = createConfigData(h.BindAddress)
 	td[env] = createEnvData()
+	if runtimeData, err := createRuntimeData(); err == nil {
+		td[run] = runtimeData
+	} else {
+		h.Log.Warnf("unable to detect runtime-info: %s", err)
+	}
 
 	now := time.Now()
 	loc, _ := time.LoadLocation("GMT")

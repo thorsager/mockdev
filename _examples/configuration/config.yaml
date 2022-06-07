@@ -60,6 +60,25 @@ http:
             - 'X-Now-GMT: {{ .currentTime_GMT.Format "Mon, 02 Jan 2006 15:04:05 MST" }}'
             - 'X-Now: {{ .currentTime.Format "Mon, 02 Jan 2006 15:04:05 MST" }}'
           body: Hello World, cool, from mocdevd
+      - name: "local addr"
+        request:
+          url-matcher:
+            path: /addr
+        response:
+          status-code: 200
+          headers:
+            - "Content-type: text/plain"
+          body: | 
+            my first IP is: {{ (index .run.ipv4 0) }}
+            
+            IPv4:
+            {{ range $i, $a := .run.ipv4 }}{{$i}}: {{
+            {{end}}
+            
+            IPv6
+            {{ range $i, $a := .run.ipv6 }}{{$i}}:{{$a}}
+            {{end}}
+
 #
 # Below is an example of how "header auth could be constructed
 # please note that using 'break-on: no-match' can be a bit tricky if other non-breaking
