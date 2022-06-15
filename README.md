@@ -20,7 +20,7 @@ at [config.yaml](_examples/configuration/config.yaml). It is quite straight forw
 # Run under docker
 
 ```
-docker run --rm -p 161:1161/udp docker pull ghcr.io/thorsager/mockdev
+docker run --rm -p 161:1161/udp ghcr.io/thorsager/mockdev
 ```
 
 ```

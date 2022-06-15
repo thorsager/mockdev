@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/soniah/gosnmp"
+	"github.com/gosnmp/gosnmp"
 	"github.com/thorsager/mockdev/snmpsup"
 	"github.com/thorsager/mockdev/spinner"
 	"os"
