@@ -49,6 +49,8 @@ github.com/thorsager/GoSNMPServer v0.1.3-0.20220615134933-855a6b052a72 h1:zxFnTb
 github.com/thorsager/GoSNMPServer v0.1.3-0.20220615134933-855a6b052a72/go.mod h1:YvvAhBahK+tzkw9yenaNXXftZDR+T3y3OqLL1q4/3pU=
 github.com/thorsager/GoSNMPServer v0.1.3-0.20220617064021-50803377c927 h1:34Eq2bZaLzJ3045Sx1jWwS85JgHGQmQJs+qyAOx7/Tw=
 github.com/thorsager/GoSNMPServer v0.1.3-0.20220617064021-50803377c927/go.mod h1:Lrn2n2hsaKLpAme03eIeoGgE3qH0j9DkGtp6ZqqcngE=
+github.com/thorsager/GoSNMPServer v0.1.3-0.20220617100047-644e271aa5aa h1:NU8cfx083z3/NKOe5c96ZtHV3bs9HKNPKFR6SDkytts=
+github.com/thorsager/GoSNMPServer v0.1.3-0.20220617100047-644e271aa5aa/go.mod h1:Lrn2n2hsaKLpAme03eIeoGgE3qH0j9DkGtp6ZqqcngE=
 github.com/tklauser/go-sysconf v0.3.10 h1:IJ1AZGZRWbY8T5Vfk04D9WOA5WSejdflXxP03OUqALw=
 github.com/tklauser/go-sysconf v0.3.10/go.mod h1:C8XykCvCb+Gn0oNCWPIlcb0RuglQTYaQ2hGm7jmxEFk=
 github.com/tklauser/numcpus v0.4.0/go.mod h1:1+UI3pD8NW14VMwdgJNJ1ESk2UnwhAnz5hMwiKKqXCQ=
@@ -77,6 +79,8 @@ golang.org/x/sys v0.0.0-20220128215802-99c3d69c2c27/go.mod h1:oPkhp1MJrh7nUepCBc
 golang.org/x/sys v0.0.0-20220503163025-988cb79eb6c6/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20220614162138-6c1b26c55098 h1:PgOr27OhUx2IRqGJ2RxAWI4dJQ7bi9cSrB82uzFzfUA=
 golang.org/x/sys v0.0.0-20220614162138-6c1b26c55098/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+golang.org/x/sys v0.0.0-20220615213510-4f61da869c0c h1:aFV+BgZ4svzjfabn8ERpuB4JI4N6/rdy1iusx77G3oU=
+golang.org/x/sys v0.0.0-20220615213510-4f61da869c0c/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1 h1:v+OssWQX+hTHEmOBgwxdZxK4zHq3yOs8F9J7mk0PY8E=
 golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1/go.mod h1:bj7SfCRtBDWHUb9snDiAeCFNEtKQo2Wmx5Cou7ajbmo=
 golang.org/x/text v0.0.0-20170915032832-14c0d48ead0c/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
