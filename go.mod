@@ -2,7 +2,7 @@ module github.com/thorsager/mockdev
 
 go 1.18
 
-replace github.com/slayercat/GoSNMPServer => github.com/thorsager/GoSNMPServer v0.1.3-0.20220617100047-644e271aa5aa
+replace github.com/slayercat/GoSNMPServer => github.com/thorsager/GoSNMPServer v0.1.3-0.20220618205517-7650fd7ef16a
 
 require (
 	github.com/docker/docker v20.10.17+incompatible
