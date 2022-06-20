@@ -78,5 +78,5 @@ An example of usage can be found in [config.yaml](_examples/configuration/config
 
 # Thank You
 This project builds on [slayercat/GoSNMPServer](https://github.com/slayercat/GoSNMPServer) for all the SNMP serving _(I
-have made a [fork](https://github.com/slayercat/GoSNMPServer) for maintenance)_ and the [gliderlabs/ssh](https://github.com/gliderlabs/ssh)
+have made a [fork](https://github.com/thorsager/GoSNMPServer) for maintenance)_ and the [gliderlabs/ssh](https://github.com/gliderlabs/ssh)
 for SSH serving.
