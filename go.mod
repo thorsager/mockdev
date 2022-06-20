@@ -2,13 +2,15 @@ module github.com/thorsager/mockdev
 
 go 1.18
 
+replace github.com/slayercat/GoSNMPServer => github.com/thorsager/GoSNMPServer v0.3.0-beta.1
+
 require (
 	github.com/docker/docker v20.10.17+incompatible
 	github.com/gliderlabs/ssh v0.3.4
 	github.com/gosnmp/gosnmp v1.35.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/slayercat/GoSNMPServer v0.1.2
-	github.com/slayercat/gosnmp v1.24.0
+	github.com/slayercat/gosnmp v1.24.1-0.20200225080903-29819b7774e5
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -22,5 +24,5 @@ require (
 	github.com/tklauser/numcpus v0.5.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e // indirect
-	golang.org/x/sys v0.0.0-20220614162138-6c1b26c55098 // indirect
+	golang.org/x/sys v0.0.0-20220615213510-4f61da869c0c // indirect
 )

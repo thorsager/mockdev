@@ -22,21 +22,22 @@ func (p *NeutralPDU) String() string {
 	var v string
 	switch t := p.Value.(type) {
 	case string:
-		{
-			s := p.Value.(string)
-			if isAsciiPrintable(s) {
-				tp = fmt.Sprintf("%T", t)
-				v = s
-			} else {
-				tp = fmt.Sprintf("hex-%T", t)
-				v = hex.EncodeToString([]byte(s))
-			}
-		}
+		tp, v = encodeString(p.Value.(string))
+	case []uint8:
+		b := p.Value.([]uint8)
+		s := string(b)
+		tp, v = encodeString(s)
 	default:
 		v = fmt.Sprintf("%v", p.Value)
 		tp = fmt.Sprintf("%T", t)
 	}
 	return fmt.Sprintf("%s/%d/%s/%s", p.Oid, p.Asn1BER, tp, v)
+}
+func encodeString(s string) (string, string) {
+	if isAsciiPrintable(s) {
+		return "string", s
+	}
+	return "hex-string", hex.EncodeToString([]byte(s))
 }
 
 func ParseNeutralPDU(s string) (*NeutralPDU, error) {
