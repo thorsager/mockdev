@@ -1,3 +1,4 @@
+loglevel: trace
 snmp:
   - name: primary-snmp
     bind-addr: ":1161"
